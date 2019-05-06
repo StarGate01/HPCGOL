@@ -58,6 +58,7 @@
             "label": "Local: Run Simple",
             "type": "shell",
             "command": "./bin/simple",
+            "args": [ "0", "10", "10000", "10000" ],
             "problemMatcher": [],
             "group": "test"
         },
