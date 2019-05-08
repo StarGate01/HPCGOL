@@ -2,19 +2,21 @@
 ! and field data initialization and printing
 module helpers
 
+    use, intrinsic :: iso_fortran_env
+
     implicit none
     public
 
-    integer, parameter :: num_args_max = 4
+    integer, parameter :: num_args_max = 6
 
     ! Represents the possible CLI arguments and their values
     type t_arguments
-        logical     :: print    = .true.
-        integer(4)  :: steps    = 5
-        integer(4)  :: width    = 10
-        integer(4)  :: height   = 10
-        integer(4)  :: threads  = 1
-        integer(4)  :: nodes    = 1
+        logical         :: print    = .true.
+        integer(INT32)  :: steps    = 5
+        integer(INT32)  :: width    = 10
+        integer(INT32)  :: height   = 10
+        integer(INT32)  :: threads  = 1
+        integer(INT32)  :: nodes    = 1
     end type
 
     contains
@@ -52,10 +54,10 @@ module helpers
 
     ! Prints the field with the numeric values of each cell
     subroutine field_print_numeric(field, width, height)
-        integer(1), dimension(*, *), pointer, intent(in) :: field(:, :)
-        integer(4), intent(in) :: width, height
+        integer(INT8), dimension(*, *), pointer, intent(in) :: field(:, :)
+        integer(INT32), intent(in) :: width, height
 
-        integer(4)  :: i, j
+        integer(INT32)  :: i, j
 
         do i = 1, width
             do j = 1, height
@@ -67,10 +69,10 @@ module helpers
 
     ! Prints a graphical representation of the field
     subroutine field_print_fancy(field, width, height)
-        integer(1), dimension(*, *), pointer, intent(in) :: field(:, :)
-        integer(4), intent(in) :: width, height
+        integer(INT8), dimension(*, *), pointer, intent(in) :: field(:, :)
+        integer(INT32), intent(in) :: width, height
 
-        integer(4)  :: i, j
+        integer(INT32)  :: i, j
 
         do i = 1, width
             do j = 1, height
@@ -86,11 +88,11 @@ module helpers
 
     ! Fills the field with random ones and zeros
     subroutine field_randomize(field, width, height)
-        integer(1), dimension(*, *), pointer, intent(inout) :: field(:, :)
-        integer(4), intent(in) :: width, height
+        integer(INT8), dimension(*, *), pointer, intent(inout) :: field(:, :)
+        integer(INT32), intent(in) :: width, height
 
-        integer(4)  :: i, j
-        real        :: rnd
+        integer(INT32)  :: i, j
+        real            :: rnd
 
         do i = 1, width
             do j = 1, height
@@ -106,20 +108,21 @@ module helpers
 
      ! Fills the field with a glider pattern
     subroutine field_pattern(field)
-        integer(1), dimension(*, *), pointer, intent(inout) :: field(:, :)
+        integer(INT8), dimension(*, *), pointer, intent(inout) :: field(:, :)
 
         field = 0
         field(1:3, 1:3) = reshape((/ 0, 0, 1, 1, 0, 1, 0, 1, 1 /), (/ 3, 3 /))
     end subroutine
 
     ! Prints a step report
-    subroutine print_step_report(args, time, num, field)
+    subroutine print_step_report(args, time, clock, num, field)
         type(t_arguments), intent(in)   :: args
-        real(4), intent(in)             :: time
+        real(REAL64), intent(in)        :: time, clock
         integer                         :: num
-        integer(1), dimension(*, *), pointer, intent(inout) :: field(:, :)
+        integer(INT8), dimension(*, *), pointer, intent(inout) :: field(:, :)
 
-        write(*, "(A, I0, A, F10.6, A)") "Step #", num, " took ", time, " seconds"
+        write(*, "(A, I0, A, I0, A, F10.6, A, F10.6, A)") "Step #", num, ", CPU*", args%threads, &
+            ": ", time, " s, WC: ", clock, " s"
         if (args%print) then
             call field_print_fancy(field, args%width, args%height)
             write(*, "(A)") ""
@@ -127,12 +130,13 @@ module helpers
     end subroutine
 
     ! Prints the concluding report
-    subroutine print_init_report(args, time, field)
+    subroutine print_init_report(args, time, clock, field)
         type(t_arguments), intent(in)   :: args
-        real(4), intent(in)             :: time
-        integer(1), dimension(*, *), pointer, intent(inout) :: field(:, :)
+        real(REAL64), intent(in)        :: time, clock
+        integer(INT8), dimension(*, *), pointer, intent(inout) :: field(:, :)
 
-        write(*, "(A, F10.6, A)") "Completed initialization in ", time, " seconds"
+        write(*, "(A, I0, A, F10.6, A, F10.6, A)") "Completed initialization, CPU*", args%threads, &
+            ": ", time, " s, WC: ", clock, " s"
         if (args%print) then
             write(*, "(A)") "Initial state"
             call field_print_fancy(field, args%width, args%height)
@@ -141,15 +145,16 @@ module helpers
     end subroutine
 
     ! Prints the concluding report
-    subroutine print_report(args, time, name)
+    subroutine print_report(args, time, clock, name)
         type(t_arguments), intent(in)   :: args
-        real(4), intent(in)             :: time
+        real(REAL64), intent(in)        :: time, clock
         character(len=*), intent(in)    :: name
 
-        write(*, "(A, I0, A, I0, A, F10.6, A, F10.6, A)") "Done, computed ", args%steps, " steps (each ", &
-            (args%width * args%height), " cells) in ", time, " seconds (avg. ", (real(args%steps) / time), " sps)"
-        write(*, "(A, A, A, I0, A, I0, A, I0, A, I0, A, F10.6)") "REPORT ", name, " ", args%threads, " ", &
-            args%nodes, " ", args%steps, " ", (args%width * args%height), " ", time
+        write(*, "(A, I0, A, I0, A, I0, A, F10.6, A, F10.6, A, F10.6, A)") "Done, computed ", &
+            args%steps, " steps *", (args%width * args%height), " cells, CPU*", args%threads, &
+            ": ", time, " s, WC: ", clock, " s (avg. ", (real(args%steps) / clock), " sps)"
+        write(*, "(A, A, A, I0, A, I0, A, I0, A, I0, A, F10.6, A, F10.6)") "REPORT ", name, " ", &
+            args%threads, " ", args%nodes, " ", args%steps, " ", (args%width * args%height), " ", time, " ", clock
     end subroutine
 
 end module

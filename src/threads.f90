@@ -1,25 +1,28 @@
-program simple
+program threads
 
     use helpers
+
+    use, intrinsic :: iso_fortran_env
 
     implicit none
 
     ! General variables
-    type(t_arguments)                                   :: args ! CLI arguments
-    integer(1), dimension(:, :), allocatable, target    :: field_one, field_two ! Cell data array
-    integer(1), dimension(:, :), pointer                :: field_current, field_next ! Cell data pointers
-    real                                                :: time_start, time_finish, time_delta, time_sum ! Timing stamps
+    type(t_arguments)                                       :: args ! CLI arguments
+    integer(INT8), dimension(:, :), allocatable, target     :: field_one, field_two ! Cell data array
+    integer(INT8), dimension(:, :), pointer                 :: field_current, field_next ! Cell data pointers
+    real(REAL64)                                            :: time_start, time_finish, time_delta, time_sum, clock_delta, clock_sum ! Timing stamps
+    integer(INT64)                                          :: clock_start, clock_finish, clock_rate ! Wallclock
 
-    integer                                             :: alloc_stat_one, alloc_stat_two ! Cell array allocation status
-    integer                                             :: k ! Step index
+    integer                                                 :: alloc_stat_one, alloc_stat_two ! Cell array allocation status
+    integer                                                 :: k ! Step index
 
     ! Algorithmus specific variables
-    integer(1)                                          :: cell_sum
-    integer(1), dimension(0:8, 0:1), parameter          :: neighbour_lookup = reshape(&
+    integer(INT8)                                           :: cell_sum
+    integer(INT8), dimension(0:8, 0:1), parameter           :: neighbour_lookup = reshape(&
         (/  0, 0, 0, 1, 0, 0, 0, 0, 0, &
             0, 0, 1, 1, 0, 0, 0, 0, 0 /), (/ 9, 2 /))
-    integer(4)                                          :: t, i, j, n, m
-    integer(4)                                          :: t_size, t_size_rest, t_i_begin, t_i_end
+    integer(INT32)                                          :: t, i, j, n, m
+    integer(INT32)                                          :: t_size, t_size_rest, t_i_begin, t_i_end
 
 
     write(*, "(A)") "Program: Simple optimized: Lookup table"
@@ -28,6 +31,7 @@ program simple
     call arguments_get(args)
   
     write(*, "(A)") "Initializing..."
+    call system_clock(clock_start, clock_rate)
     call cpu_time(time_start)
 
     ! Allocate cell data array
@@ -54,13 +58,16 @@ program simple
     call field_randomize(field_current, args%width, args%height)
 
     call cpu_time(time_finish)
+    call system_clock(clock_finish)
     time_delta = time_finish - time_start
+    clock_delta = real(clock_finish - clock_start) / real(clock_rate)
     ! Print initialization diagnostics
-    call print_init_report(args, time_delta, field_current)
+    call print_init_report(args, time_delta, clock_delta, field_current)
 
 
     ! Main computation loop
     write(*, "(A, I0, A)") "Computing ", args%steps, " steps..."
+    time_sum = 0
     do k = 1, args%steps
         ! Insted of copying the previous and next state around,
         ! we simply swap the pointers
@@ -72,6 +79,7 @@ program simple
             field_next => field_one
         end if
 
+        call system_clock(clock_start)
         call cpu_time(time_start)
         
         ! Multithreaded implementation with lookups
@@ -109,17 +117,19 @@ program simple
                     field_next(j, i) = neighbour_lookup(cell_sum, field_current(j, i))
                 end do 
             end do
-            !$omp parallel end
+            !$omp end parallel do
         end do
 
         call cpu_time(time_finish)
-
-        ! Print step diagnostics
+        call system_clock(clock_finish)
         time_delta = time_finish - time_start
         time_sum = time_sum + time_delta
-        call print_step_report(args, time_delta, k, field_next)
+        clock_delta = real(clock_finish - clock_start) / real(clock_rate)
+        clock_sum = clock_sum + clock_delta
+        ! Print step diagnostics
+        call print_step_report(args, time_delta, clock_delta, k, field_next)
     end do
 
     ! Print concluding diagnostics
-    call print_report(args, time_sum, "simple_opt")
+    call print_report(args, time_sum, clock_sum, "simple_opt")
 end

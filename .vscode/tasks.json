@@ -4,51 +4,6 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Local: Build All",
-            "type": "shell",
-            "command": "./build.sh",
-            "problemMatcher": {
-                "fileLocation": ["relative", "${workspaceRoot}"],
-                "pattern": [
-                    {
-                        "regexp": "^([^\\s].*):(\\d+):(\\d+):$",
-                        "file": 1,
-                        "line": 2,
-                        "column": 3,
-                    },
-                    {
-                        "regexp": "^.*$",
-                    },
-                    {
-                        "regexp": "^\\s+(.*)$",
-                        "code": 1
-                    },
-                    {
-                        "regexp": "^.*$",
-                    },
-                    {
-                        "regexp": "^(Warning|Error):\\s+(.*)$",
-                        "severity": 1,
-                        "message": 2
-                    }
-                ],
-                "source": "compiler ",
-                "applyTo": "allDocuments"
-            },
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "silent",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": false,
-                "clear": false
-            }
-        },
-        {
             "label": "Local: Clean",
             "type": "shell",
             "command": "make clean",
@@ -57,7 +12,7 @@
         {
             "label": "Local: Run Simple with graphics",
             "type": "shell",
-            "command": "make run EXE=simple ARG_PRINT=1 ARG_WIDTH=10 ARG_HEIGHT=10",
+            "command": "make run EXE=simple ARG_STEPS=15 ARG_PRINT=1 ARG_WIDTH=10 ARG_HEIGHT=10",
             "problemMatcher": [],
             "group": "test"
         },
