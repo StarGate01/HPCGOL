@@ -1,6 +1,7 @@
-program simple_opt
+program nodes
 
     use helpers
+    use mpi
 
     use, intrinsic :: iso_fortran_env
 
@@ -21,10 +22,11 @@ program simple_opt
     integer(INT8), dimension(0:8, 0:1), parameter           :: neighbour_lookup = reshape(&
         (/  0, 0, 0, 1, 0, 0, 0, 0, 0, &
             0, 0, 1, 1, 0, 0, 0, 0, 0 /), (/ 9, 2 /))
-    integer(INT32)                                          :: i, j, n, m
+    integer(INT32)                                          :: t, i, j, n, m
+    integer(INT32)                                          :: t_size, t_size_rest, t_i_begin, t_i_end
 
 
-    write(*, "(A)") "Program: Simple optimized: Lookup table"
+    write(*, "(A)") "Program: Multi-CPU optimized"
 
     ! Parse CLI arguments
     call arguments_get(args)
@@ -47,14 +49,13 @@ program simple_opt
         write(*, "(A, I0)") "Error: Cannot allocate field_two memory: ", alloc_stat_two
         stop 1
     end if
-    
+
     ! Initialize data
     field_one = 0
     field_two = 0
     field_current => field_one
     field_next => field_two
     ! Initialize cells randomly
-    write(*, "(A)") "Generating..."
     ! call field_pattern(field_current)
     call field_randomize(field_current, 0, args%width, args%height)
 
@@ -68,6 +69,7 @@ program simple_opt
 
     ! Main computation loop
     write(*, "(A, I0, A)") "Computing ", args%steps, " steps..."
+    time_sum = 0
     do k = 1, args%steps
         ! Insted of copying the previous and next state around,
         ! we simply swap the pointers
@@ -82,26 +84,45 @@ program simple_opt
         call system_clock(clock_start)
         call cpu_time(time_start)
         
-        ! Naive implementation with lookups
+        ! Multithreaded implementation with lookups
         ! We iterate column-wise to exploit CPU cache locality,
         ! because fortran lays out its array memory column-wise.
-        do i = 1, args%width
-            do j = 1, args%height
-                ! We sum the 3*3 square around the current cell
-                ! Because we have a outflow border, we do not have to worry about edge cases
-                cell_sum = 0
-                do n = i - 1, i + 1
-                    do m = j - 1, j + 1
-                        cell_sum = cell_sum + field_current(m, n)
+        ! Compute how much each thread has to work
+        t_size = args%width / args%threads
+        t_size_rest = mod(args%width, args%threads)
+        do t = 1, args%threads
+            ! Compute what data each thread has to work on
+            t_i_begin = ((t - 1) * t_size) + 1
+            t_i_end = t * t_size
+            ! Distribute the rest of work by adding one column if needed
+            if(t .le. t_size_rest) then
+                t_i_begin = t_i_begin + (t - 1)
+                t_i_end = t_i_end + (t - 1) + 1
+            else
+                t_i_begin = t_i_begin + t_size_rest
+                t_i_end = t_i_end + t_size_rest
+            end if
+            ! Calculate work scheduled for this thread
+            !$omp parallel do private(i, j, cell_sum)
+            do i = t_i_begin, t_i_end
+                do j = 1, args%height
+                    ! We sum the 3*3 square around the current cell
+                    ! Because we have a outflow border, we do not have to worry about edge cases
+                    cell_sum = 0
+                    do n = i - 1, i + 1
+                        do m = j - 1, j + 1
+                            cell_sum = cell_sum + field_current(m, n)
+                        end do
                     end do
-                end do
-                ! Substract center cell, we only want neighbours
-                cell_sum = cell_sum - field_current(j, i)
+                    ! Substract center cell, we only want neighbours
+                    cell_sum = cell_sum - field_current(j, i)
 
-                ! We decide on the next state of this cell based on the count of neighbours
-                ! Instead of explicit comparisions, we look up the new state in a lookup table
-                field_next(j, i) = neighbour_lookup(cell_sum, field_current(j, i))
-            end do 
+                    ! We decide on the next state of this cell based on the count of neighbours
+                    ! Instead of explicit comparisions, we look up the new state in a lookup table
+                    field_next(j, i) = neighbour_lookup(cell_sum, field_current(j, i))
+                end do 
+            end do
+            !$omp end parallel do
         end do
 
         call cpu_time(time_finish)
@@ -115,7 +136,5 @@ program simple_opt
     end do
 
     ! Print concluding diagnostics
-    call print_report(args, time_sum, clock_sum, "simple_opt")
-    deallocate(field_one)
-    deallocate(field_two)
+    call print_report(args, time_sum, clock_sum, "nodes")
 end

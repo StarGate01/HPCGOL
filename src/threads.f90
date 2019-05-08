@@ -22,7 +22,7 @@ program threads
         (/  0, 0, 0, 1, 0, 0, 0, 0, 0, &
             0, 0, 1, 1, 0, 0, 0, 0, 0 /), (/ 9, 2 /))
     integer(INT32)                                          :: t, i, j, n, m
-    integer(INT32)                                          :: t_size, t_size_rest, t_i_begin, t_i_end
+    integer(INT32)                                          :: t_i_begin, t_i_end
 
 
     write(*, "(A)") "Program: Multithreaded optimized"
@@ -55,8 +55,9 @@ program threads
     field_current => field_one
     field_next => field_two
     ! Initialize cells randomly
+    write(*, "(A)") "Generating..."
     ! call field_pattern(field_current)
-    call field_randomize(field_current, args%width, args%height)
+    call field_randomize(field_current, 0, args%width, args%height)
 
     call cpu_time(time_finish)
     call system_clock(clock_finish)
@@ -67,8 +68,6 @@ program threads
 
 
     ! Main computation loop
-    write(*, "(A, I0, A)") "Computing ", args%steps, " steps..."
-    time_sum = 0
     do k = 1, args%steps
         ! Insted of copying the previous and next state around,
         ! we simply swap the pointers
@@ -86,23 +85,11 @@ program threads
         ! Multithreaded implementation with lookups
         ! We iterate column-wise to exploit CPU cache locality,
         ! because fortran lays out its array memory column-wise.
-        ! Compute how much each thread has to work
-        t_size = args%width / args%threads
-        t_size_rest = mod(args%width, args%threads)
+        !$omp parallel do private(i, j, cell_sum, t, t_i_begin, t_i_end)
         do t = 1, args%threads
             ! Compute what data each thread has to work on
-            t_i_begin = ((t - 1) * t_size) + 1
-            t_i_end = t * t_size
-            ! Distribute the rest of work by adding one column if needed
-            if(t .le. t_size_rest) then
-                t_i_begin = t_i_begin + (t - 1)
-                t_i_end = t_i_end + (t - 1) + 1
-            else
-                t_i_begin = t_i_begin + t_size_rest
-                t_i_end = t_i_end + t_size_rest
-            end if
+            call compute_work_slice(args%threads, args%width, t, t_i_begin, t_i_end)
             ! Calculate work scheduled for this thread
-            !$omp parallel do private(i, j, cell_sum)
             do i = t_i_begin, t_i_end
                 do j = 1, args%height
                     ! We sum the 3*3 square around the current cell
@@ -121,8 +108,8 @@ program threads
                     field_next(j, i) = neighbour_lookup(cell_sum, field_current(j, i))
                 end do 
             end do
-            !$omp end parallel do
         end do
+        !$omp end parallel do
 
         call cpu_time(time_finish)
         call system_clock(clock_finish)
@@ -135,5 +122,33 @@ program threads
     end do
 
     ! Print concluding diagnostics
-    call print_report(args, time_sum, clock_sum, "simple_opt")
+    call print_report(args, time_sum, clock_sum, "threads")
+    deallocate(field_one)
+    deallocate(field_two)
 end
+
+! This subroutine distributes work across threads
+subroutine compute_work_slice(slots, width, t, begin, end)
+    use, intrinsic :: iso_fortran_env
+    implicit none
+
+    integer(INT32), intent(in)  :: slots, width, t
+    integer(INT32), intent(out) :: begin, end
+    integer(INT32)              :: size, size_rest
+
+    ! Compute how much each thread has to work
+    size = width / slots
+    size_rest = mod(width, slots)
+    ! Compute what data each thread has to work on
+    begin = ((t - 1) * size) + 1
+    end = t * size
+    ! Distribute the rest of work by adding one column if needed
+    if(t .le. size_rest) then
+        begin = begin + (t - 1)
+        end = end + (t - 1) + 1
+    else
+        begin = begin + size_rest
+        end = end + size_rest
+    end if
+end
+

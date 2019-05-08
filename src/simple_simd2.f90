@@ -54,8 +54,9 @@ program simple_simd2
     field_current => field_one
     field_next => field_two
     ! Initialize cells randomly
+    write(*, "(A)") "Generating..."
     ! call field_pattern(field_current)
-    call field_randomize(field_current, args%width, args%height)
+    call field_randomize(field_current, 0, args%width, args%height)
 
     call cpu_time(time_finish)
     call system_clock(clock_finish)
@@ -115,4 +116,6 @@ program simple_simd2
 
     ! Print concluding diagnostics
     call print_report(args, time_sum, clock_sum, "simple_simd2")
+    deallocate(field_one)
+    deallocate(field_two)
 end

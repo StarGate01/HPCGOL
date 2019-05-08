@@ -87,14 +87,14 @@ module helpers
     end subroutine
 
     ! Fills the field with random ones and zeros
-    subroutine field_randomize(field, width, height)
+    subroutine field_randomize(field, slice_begin, slice_end, height)
         integer(INT8), dimension(*, *), pointer, intent(inout) :: field(:, :)
-        integer(INT32), intent(in) :: width, height
+        integer(INT32), intent(in) :: height, slice_begin, slice_end
 
         integer(INT32)  :: i, j
         real            :: rnd
 
-        do i = 1, width
+        do i = slice_begin, slice_end
             do j = 1, height
                 call random_number(rnd)
                 if (rnd .le. 0.5) then
@@ -134,7 +134,8 @@ module helpers
         real(REAL64), intent(in)        :: time, clock
         integer(INT8), dimension(*, *), pointer, intent(inout) :: field(:, :)
 
-        write(*, "(A, F10.6, A, F10.6, A)") "Completed initialization, CPU*1T*1N: ", time, " s, WC: ", clock, " s"
+        write(*, "(A, I0, A, I0, A, F10.6, A, F10.6, A)") "Completed initialization, CPU*", args%threads, "T*", &
+            args%nodes, "N: ", time, " s, WC: ", clock, " s"
         if (args%print) then
             write(*, "(A)") "Initial state"
             call field_print_fancy(field, args%width, args%height)

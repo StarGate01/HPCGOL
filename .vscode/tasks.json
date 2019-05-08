@@ -4,6 +4,12 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "Local: Install dependencies",
+            "type": "shell",
+            "command": "make deps",
+            "problemMatcher": []
+        },
+        {
             "label": "Local: Clean",
             "type": "shell",
             "command": "make clean",
@@ -45,9 +51,23 @@
             "group": "test"
         },
         {
-            "label": "Local: Run Threads",
+            "label": "Local: Run Multithreaded",
             "type": "shell",
             "command": "make run EXE=threads",
+            "problemMatcher": [],
+            "group": "test"
+        },
+        {
+            "label": "Local: Run Multi-CPU",
+            "type": "shell",
+            "command": "make run EXE=nodes",
+            "problemMatcher": [],
+            "group": "test"
+        },
+        {
+            "label": "Local: Run Hybrid",
+            "type": "shell",
+            "command": "make run EXE=hybrid",
             "problemMatcher": [],
             "group": "test"
         },
