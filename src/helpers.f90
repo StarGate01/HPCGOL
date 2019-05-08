@@ -110,7 +110,6 @@ module helpers
     subroutine field_pattern(field)
         integer(INT8), dimension(*, *), pointer, intent(inout) :: field(:, :)
 
-        field = 0
         field(1:3, 1:3) = reshape((/ 0, 0, 1, 1, 0, 1, 0, 1, 1 /), (/ 3, 3 /))
     end subroutine
 
@@ -121,8 +120,8 @@ module helpers
         integer                         :: num
         integer(INT8), dimension(*, *), pointer, intent(inout) :: field(:, :)
 
-        write(*, "(A, I0, A, I0, A, F10.6, A, F10.6, A)") "Step #", num, ", CPU*", args%threads, &
-            ": ", time, " s, WC: ", clock, " s"
+        write(*, "(A, I0, A, I0, A, I0, A, F10.6, A, F10.6, A)") "Step #", num, ", CPU*", args%threads, &
+            "T*", args%nodes, "N: ", time, " s, WC: ", clock, " s"
         if (args%print) then
             call field_print_fancy(field, args%width, args%height)
             write(*, "(A)") ""
@@ -135,8 +134,7 @@ module helpers
         real(REAL64), intent(in)        :: time, clock
         integer(INT8), dimension(*, *), pointer, intent(inout) :: field(:, :)
 
-        write(*, "(A, I0, A, F10.6, A, F10.6, A)") "Completed initialization, CPU*", args%threads, &
-            ": ", time, " s, WC: ", clock, " s"
+        write(*, "(A, F10.6, A, F10.6, A)") "Completed initialization, CPU*1T*1N: ", time, " s, WC: ", clock, " s"
         if (args%print) then
             write(*, "(A)") "Initial state"
             call field_print_fancy(field, args%width, args%height)
@@ -150,9 +148,11 @@ module helpers
         real(REAL64), intent(in)        :: time, clock
         character(len=*), intent(in)    :: name
 
-        write(*, "(A, I0, A, I0, A, I0, A, F10.6, A, F10.6, A, F10.6, A)") "Done, computed ", &
-            args%steps, " steps *", (args%width * args%height), " cells, CPU*", args%threads, &
-            ": ", time, " s, WC: ", clock, " s (avg. ", (real(args%steps) / clock), " sps)"
+        write(*, "(A, I0, A, I0, A)") "Done, computed ", args%steps, " steps a ", (args%width * args%height), " cells"
+        write(*, "(A, I0, A, I0, A, F10.6, A, F10.6, A)") "Timing: CPU*", args%threads, "T*", &
+            args%nodes, "N: ", time, " s, WC: ", clock, " s"
+        write(*, "(A, F10.6, A, F10.6, A, F10.6)") "Avg: ", (real(args%steps) / clock), " sps, CPU/WC: ", &
+            (time / clock), ", parallel efficiency: ", ((time / clock) / real(args%threads * args%nodes))
         write(*, "(A, A, A, I0, A, I0, A, I0, A, I0, A, F10.6, A, F10.6)") "REPORT ", name, " ", &
             args%threads, " ", args%nodes, " ", args%steps, " ", (args%width * args%height), " ", time, " ", clock
     end subroutine

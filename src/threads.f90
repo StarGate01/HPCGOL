@@ -25,7 +25,7 @@ program threads
     integer(INT32)                                          :: t_size, t_size_rest, t_i_begin, t_i_end
 
 
-    write(*, "(A)") "Program: Simple optimized: Lookup table"
+    write(*, "(A)") "Program: Multithreaded optimized"
 
     ! Parse CLI arguments
     call arguments_get(args)
@@ -48,11 +48,12 @@ program threads
         write(*, "(A, I0)") "Error: Cannot allocate field_two memory: ", alloc_stat_two
         stop 1
     end if
+
+    ! Initialize data
     field_one = 0
     field_two = 0
     field_current => field_one
     field_next => field_two
-
     ! Initialize cells randomly
     ! call field_pattern(field_current)
     call field_randomize(field_current, args%width, args%height)
@@ -95,7 +96,10 @@ program threads
             ! Distribute the rest of work by adding one column if needed
             if(t .le. t_size_rest) then
                 t_i_begin = t_i_begin + (t - 1)
-                t_i_end = t_i_end + 1
+                t_i_end = t_i_end + (t - 1) + 1
+            else
+                t_i_begin = t_i_begin + t_size_rest
+                t_i_end = t_i_end + t_size_rest
             end if
             ! Calculate work scheduled for this thread
             !$omp parallel do private(i, j, cell_sum)

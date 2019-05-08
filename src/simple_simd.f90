@@ -47,11 +47,12 @@ program simple_simd
         write(*, "(A, I0)") "Error: Cannot allocate field_two memory: ", alloc_stat_two
         stop 1
     end if
+
+    ! Initialize data
     field_one = 0
     field_two = 0
     field_current => field_one
-    field_temp => field_two
-
+    field_next => field_two
     ! Initialize cells randomly
     ! call field_pattern(field_current)
     call field_randomize(field_current, args%width, args%height)
@@ -68,7 +69,7 @@ program simple_simd
     write(*, "(A, I0, A)") "Computing ", args%steps, " steps..."
     do k = 1, args%steps
         ! We donst swap around anymore, we use the other field for intermediate storage
-        
+
         call system_clock(clock_start)
         call cpu_time(time_start)
         

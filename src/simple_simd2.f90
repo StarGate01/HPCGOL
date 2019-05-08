@@ -47,11 +47,12 @@ program simple_simd2
         write(*, "(A, I0)") "Error: Cannot allocate field_two memory: ", alloc_stat_two
         stop 1
     end if
+
+    ! Initialize data
     field_one = 0
     field_two = 0
     field_current => field_one
     field_next => field_two
-
     ! Initialize cells randomly
     ! call field_pattern(field_current)
     call field_randomize(field_current, args%width, args%height)
