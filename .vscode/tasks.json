@@ -4,6 +4,51 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "Local: Build All",
+            "type": "shell",
+            "command": "make all",
+            "problemMatcher": {
+                "fileLocation": ["relative", "${workspaceRoot}"],
+                "pattern": [
+                    {
+                        "regexp": "^([^\\s].*):(\\d+):(\\d+):$",
+                        "file": 1,
+                        "line": 2,
+                        "column": 3,
+                    },
+                    {
+                        "regexp": "^.*$",
+                    },
+                    {
+                        "regexp": "^\\s+(.*)$",
+                        "code": 1
+                    },
+                    {
+                        "regexp": "^.*$",
+                    },
+                    {
+                        "regexp": "^(Warning|Error):\\s+(.*)$",
+                        "severity": 1,
+                        "message": 2
+                    }
+                ],
+                "source": "compiler ",
+                "applyTo": "allDocuments"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
             "label": "Local: Install dependencies",
             "type": "shell",
             "command": "make deps",
@@ -53,21 +98,21 @@
         {
             "label": "Local: Run Multithreaded",
             "type": "shell",
-            "command": "make run EXE=threads",
+            "command": "make run EXE=threads ARG_THREADS=8",
             "problemMatcher": [],
             "group": "test"
         },
         {
             "label": "Local: Run Multi-CPU",
             "type": "shell",
-            "command": "make run EXE=nodes",
+            "command": "make run EXE=nodes ARG_THREADS=4 ARG_NODES=2",
             "problemMatcher": [],
             "group": "test"
         },
         {
             "label": "Local: Run Hybrid",
             "type": "shell",
-            "command": "make run EXE=hybrid",
+            "command": "make run EXE=hybrid ARG_THREADS=4 ARG_NODES=2",
             "problemMatcher": [],
             "group": "test"
         },

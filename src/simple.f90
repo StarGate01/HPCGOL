@@ -27,7 +27,7 @@ program simple
     write(*, "(A)") "Program: Simple: Naive"
 
     ! Parse CLI arguments
-    call arguments_get(args)
+    call arguments_get(args, .true.)
   
     write(*, "(A)") "Initializing..."
     call system_clock(clock_start, clock_rate)
@@ -56,7 +56,7 @@ program simple
     ! Initialize cells randomly
     write(*, "(A)") "Generating..."
     ! call field_pattern(field_current)
-    call field_randomize(field_current, 0, args%width, args%height)
+    call field_randomize(field_current, args%width, args%height)
 
     call cpu_time(time_finish)
     call system_clock(clock_finish)

@@ -1,6 +1,7 @@
 program threads
 
     use helpers
+    use functions
 
     use, intrinsic :: iso_fortran_env
 
@@ -21,14 +22,16 @@ program threads
     integer(INT8), dimension(0:8, 0:1), parameter           :: neighbour_lookup = reshape(&
         (/  0, 0, 0, 1, 0, 0, 0, 0, 0, &
             0, 0, 1, 1, 0, 0, 0, 0, 0 /), (/ 9, 2 /))
-    integer(INT32)                                          :: t, i, j, n, m
-    integer(INT32)                                          :: t_i_begin, t_i_end
+    integer(INT32)                                          :: i, j, n, m
+
+    ! Threading specific variables
+    integer(INT32)                                          :: t, t_i_begin, t_i_end
 
 
     write(*, "(A)") "Program: Multithreaded optimized"
 
     ! Parse CLI arguments
-    call arguments_get(args)
+    call arguments_get(args, .true.)
   
     write(*, "(A)") "Initializing..."
     call system_clock(clock_start, clock_rate)
@@ -57,7 +60,7 @@ program threads
     ! Initialize cells randomly
     write(*, "(A)") "Generating..."
     ! call field_pattern(field_current)
-    call field_randomize(field_current, 0, args%width, args%height)
+    call field_randomize(field_current, args%width, args%height)
 
     call cpu_time(time_finish)
     call system_clock(clock_finish)
@@ -126,29 +129,3 @@ program threads
     deallocate(field_one)
     deallocate(field_two)
 end
-
-! This subroutine distributes work across threads
-subroutine compute_work_slice(slots, width, t, begin, end)
-    use, intrinsic :: iso_fortran_env
-    implicit none
-
-    integer(INT32), intent(in)  :: slots, width, t
-    integer(INT32), intent(out) :: begin, end
-    integer(INT32)              :: size, size_rest
-
-    ! Compute how much each thread has to work
-    size = width / slots
-    size_rest = mod(width, slots)
-    ! Compute what data each thread has to work on
-    begin = ((t - 1) * size) + 1
-    end = t * size
-    ! Distribute the rest of work by adding one column if needed
-    if(t .le. size_rest) then
-        begin = begin + (t - 1)
-        end = end + (t - 1) + 1
-    else
-        begin = begin + size_rest
-        end = end + size_rest
-    end if
-end
-

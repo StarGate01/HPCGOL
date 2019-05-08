@@ -5,7 +5,7 @@ High performance Conway's Game of Life. See https://en.wikipedia.org/wiki/Conway
  - Exploitation of cache locality and memory layout (`simple`)
  - Optimized kernel (`simple_opt`) 
  - Vectorization (sub-optimal in this use-case, not recommended) using
-   - The GCC Auto-Vectorizer (`simple_simd`)
+   - The Auto-Vectorizer (`simple_simd`)
    - OpenMP SIMD (`simple_simd2`)
  - Thread-level parallelism using OpenMP (`threads`)
  - CPU-Node parallelism using MPI (`nodes`)
@@ -43,7 +43,10 @@ The included makefile has a `run` target, which should be used to launch the bin
 ### Recommended settings
 Use the default values above to test the program using its graphical output.
 
-A field size of `10000` times `10000` is a reasonable first scale test, it runs with about 0.2 - 1 step per second on most laptops and PCs, depending on optimization and CPU speed.
+A field size of `10000` times `10000` is a reasonable first scale test, it runs with about 0.2 - 1 steps per second on most laptops and PCs, depending on optimization and CPU speed.
 
 ### Memory requirements
 The minimum amount of required RAM is roughly `2 * ARG_WIDTH * ARG_HEIGHT` bytes. When running on a MPI cluster, this memory is equally distributed.
+
+## IDE support
+The Visual Studio Code IDE (See https://code.visualstudio.com/) is supported. But any other IDE capable of launching makefiles should work.

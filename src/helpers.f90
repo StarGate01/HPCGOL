@@ -22,8 +22,9 @@ module helpers
     contains
 
     ! Parses the CLI arguments into a struct
-    subroutine arguments_get(args)
-        type(t_arguments), intent(inout) :: args
+    subroutine arguments_get(args, output)
+        type(t_arguments), intent(inout)    :: args
+        logical, intent(in)                 :: output
 
         integer         :: i, print
         character(16)   :: cmd_buffer
@@ -47,9 +48,10 @@ module helpers
                     read(cmd_buffer, *) args%nodes
             end select 
         end do
-
-        write(*, "(A, I0, A, I0, A, I0, A, I0, A, I0)") "Parameters: Steps=", args%steps, ", Width=", &
-            args%width, ", Height=", args%height, ", Threads=", args%threads, ", Nodes=", args%nodes
+        if (output) then
+            write(*, "(A, I0, A, I0, A, I0, A, I0, A, I0)") "Parameters: Steps=", args%steps, ", Width=", &
+                args%width, ", Height=", args%height, ", Threads=", args%threads, ", Nodes=", args%nodes
+        end if
     end subroutine
 
     ! Prints the field with the numeric values of each cell
@@ -87,14 +89,14 @@ module helpers
     end subroutine
 
     ! Fills the field with random ones and zeros
-    subroutine field_randomize(field, slice_begin, slice_end, height)
+    subroutine field_randomize(field, width, height)
         integer(INT8), dimension(*, *), pointer, intent(inout) :: field(:, :)
-        integer(INT32), intent(in) :: height, slice_begin, slice_end
+        integer(INT32), intent(in) :: width, height
 
         integer(INT32)  :: i, j
         real            :: rnd
 
-        do i = slice_begin, slice_end
+        do i = 1, width
             do j = 1, height
                 call random_number(rnd)
                 if (rnd .le. 0.5) then
@@ -152,8 +154,8 @@ module helpers
         write(*, "(A, I0, A, I0, A)") "Done, computed ", args%steps, " steps a ", (args%width * args%height), " cells"
         write(*, "(A, I0, A, I0, A, F10.6, A, F10.6, A)") "Timing: CPU*", args%threads, "T*", &
             args%nodes, "N: ", time, " s, WC: ", clock, " s"
-        write(*, "(A, F10.6, A, F10.6, A, F10.6)") "Avg: ", (real(args%steps) / clock), " sps, CPU/WC: ", &
-            (time / clock), ", parallel efficiency: ", ((time / clock) / real(args%threads * args%nodes))
+        write(*, "(A, F10.6, A, F10.6, A, F10.6, A)") "Avg: ", (real(args%steps) / clock), " sps, CPU/WC: ", &
+            (time / clock), ", parallel efficiency: ", ((time / clock) / real(args%threads * args%nodes)) * 100, "%"
         write(*, "(A, A, A, I0, A, I0, A, I0, A, I0, A, F10.6, A, F10.6)") "REPORT ", name, " ", &
             args%threads, " ", args%nodes, " ", args%steps, " ", (args%width * args%height), " ", time, " ", clock
     end subroutine
