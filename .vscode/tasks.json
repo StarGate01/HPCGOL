@@ -55,27 +55,46 @@
             "problemMatcher": []
         },
         {
+            "label": "Local: Run Simple with graphics",
+            "type": "shell",
+            "command": "make run EXE=simple ARG_PRINT=1 ARG_WIDTH=10 ARG_HEIGHT=10",
+            "problemMatcher": [],
+            "group": "test"
+        },
+        {
             "label": "Local: Run Simple",
             "type": "shell",
-            "command": "./bin/simple",
-            "args": [ "0", "10", "10000", "10000" ],
+            "command": "make run EXE=simple",
             "problemMatcher": [],
             "group": "test"
         },
         {
-            "label": "Local: Run OpenMP Tst",
+            "label": "Local: Run Simple optimized",
             "type": "shell",
-            "command": "./bin/omptest",
+            "command": "make run EXE=simple_opt",
             "problemMatcher": [],
             "group": "test"
         },
         {
-            "label": "Local: Run MPI Test",
+            "label": "Local: Run Simple SIMD",
             "type": "shell",
-            "command": "./bin/mpitest",
+            "command": "make run EXE=simple_simd",
             "problemMatcher": [],
             "group": "test"
         },
-    
+        {
+            "label": "Local: Run Simple SIMD 2",
+            "type": "shell",
+            "command": "make run EXE=simple_simd2",
+            "problemMatcher": [],
+            "group": "test"
+        },
+        {
+            "label": "Local: Run Threads",
+            "type": "shell",
+            "command": "make run EXE=threads",
+            "problemMatcher": [],
+            "group": "test"
+        },
     ]
 }

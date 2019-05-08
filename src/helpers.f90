@@ -9,12 +9,12 @@ module helpers
 
     ! Represents the possible CLI arguments and their values
     type t_arguments
-        logical     :: print    = .false.
-        integer(4)  :: steps    = 10
-        integer(4)  :: width    = 1024 
-        integer(4)  :: height   = 1024
-        integer(4)  :: threads  = 4
-        integer(4)  :: nodes    = 2
+        logical     :: print    = .true.
+        integer(4)  :: steps    = 5
+        integer(4)  :: width    = 10
+        integer(4)  :: height   = 10
+        integer(4)  :: threads  = 1
+        integer(4)  :: nodes    = 1
     end type
 
     contains
@@ -110,6 +110,46 @@ module helpers
 
         field = 0
         field(1:3, 1:3) = reshape((/ 0, 0, 1, 1, 0, 1, 0, 1, 1 /), (/ 3, 3 /))
+    end subroutine
+
+    ! Prints a step report
+    subroutine print_step_report(args, time, num, field)
+        type(t_arguments), intent(in)   :: args
+        real(4), intent(in)             :: time
+        integer                         :: num
+        integer(1), dimension(*, *), pointer, intent(inout) :: field(:, :)
+
+        write(*, "(A, I0, A, F10.6, A)") "Step #", num, " took ", time, " seconds"
+        if (args%print) then
+            call field_print_fancy(field, args%width, args%height)
+            write(*, "(A)") ""
+        end if
+    end subroutine
+
+    ! Prints the concluding report
+    subroutine print_init_report(args, time, field)
+        type(t_arguments), intent(in)   :: args
+        real(4), intent(in)             :: time
+        integer(1), dimension(*, *), pointer, intent(inout) :: field(:, :)
+
+        write(*, "(A, F10.6, A)") "Completed initialization in ", time, " seconds"
+        if (args%print) then
+            write(*, "(A)") "Initial state"
+            call field_print_fancy(field, args%width, args%height)
+            write(*, "(A)") " "
+        end if
+    end subroutine
+
+    ! Prints the concluding report
+    subroutine print_report(args, time, name)
+        type(t_arguments), intent(in)   :: args
+        real(4), intent(in)             :: time
+        character(len=*), intent(in)    :: name
+
+        write(*, "(A, I0, A, I0, A, F10.6, A, F10.6, A)") "Done, computed ", args%steps, " steps (each ", &
+            (args%width * args%height), " cells) in ", time, " seconds (avg. ", (real(args%steps) / time), " sps)"
+        write(*, "(A, A, A, I0, A, I0, A, I0, A, I0, A, F10.6)") "REPORT ", name, " ", args%threads, " ", &
+            args%nodes, " ", args%steps, " ", (args%width * args%height), " ", time
     end subroutine
 
 end module

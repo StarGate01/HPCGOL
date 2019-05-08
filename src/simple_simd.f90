@@ -7,7 +7,7 @@ program simple
     ! General variables
     type(t_arguments)                                   :: args ! CLI arguments
     integer(1), dimension(:, :), allocatable, target    :: field_one, field_two ! Cell data array
-    integer(1), dimension(:, :), pointer                :: field_current, field_next ! Cell data pointers
+    integer(1), dimension(:, :), pointer                :: field_current, field_temp ! Cell data pointers
     real                                                :: time_start, time_finish, time_delta, time_sum ! Timing stamps
 
     integer                                             :: alloc_stat_one, alloc_stat_two ! Cell array allocation status
@@ -15,10 +15,13 @@ program simple
 
     ! Algorithmus specific variables
     integer(1)                                          :: cell_sum
-    integer(4)                                          :: i, j, n, m
+    integer(1), dimension(0:8, 0:1), parameter          :: neighbour_lookup = reshape(&
+        (/  0, 0, 0, 1, 0, 0, 0, 0, 0, &
+            0, 0, 1, 1, 0, 0, 0, 0, 0 /), (/ 9, 2 /))
+    integer(4)                                          :: i, j
 
 
-    write(*, "(A)") "Program: Simple: Naive"
+    write(*, "(A)") "Program: Simple optimized further: Vectorized sums using SIMD"
 
     ! Parse CLI arguments
     call arguments_get(args)
@@ -43,7 +46,7 @@ program simple
     field_one = 0
     field_two = 0
     field_current => field_one
-    field_next => field_two
+    field_temp => field_two
 
     ! Initialize cells randomly
     ! call field_pattern(field_current)
@@ -58,55 +61,30 @@ program simple
     ! Main computation loop
     write(*, "(A, I0, A)") "Computing ", args%steps, " steps..."
     do k = 1, args%steps
-        ! Insted of copying the previous and next state around,
-        ! we simply swap the pointers
-        if (mod(k, 2) .eq. 1) then
-            field_current => field_one
-            field_next => field_two
-        else
-            field_current => field_two
-            field_next => field_one
-        end if
-
+        ! We donst swap around anymore, we use the other field for intermediate storage
         call cpu_time(time_start)
         
-        ! Naive implementation
+        ! Naive implementation with lookup and row sums
+        ! We sum three colums next to each other row-wise and store them
+        ! This loop can be vectorized using SIMD
+        do i = 1, args%width
+            field_temp(:, i) = sum(field_current(:, i-1:i+1), dim=2)
+        end do
+
         ! We iterate column-wise to exploit CPU cache locality,
         ! because fortran lays out its array memory column-wise.
         do i = 1, args%width
             do j = 1, args%height
-                ! We sum the 3*3 square around the current cell
                 ! Because we have a outflow border, we do not have to worry about edge cases
-                cell_sum = 0
-                do n = i - 1, i + 1
-                    do m = j - 1, j + 1
-                        cell_sum = cell_sum + field_current(m, n)
-                    end do
-                end do
                 ! Substract center cell, we only want neighbours
-                cell_sum = cell_sum - field_current(j, i)
+                ! We now only have to sum 3 elements in the current column, further reducing cache misses
+                ! Also, this summation can be vectorized using SIMD
+                cell_sum = sum(field_temp(j-1:j+1, i), dim=1) - field_current(j, i)
 
                 ! We decide on the next state of this cell based on the count of neighbours
-                if (field_current(j, i) .eq. 1) then ! Cell was alive
-                    if (cell_sum .lt. 2) then
-                        ! Cell dies of loneliness
-                        field_next(j, i) = 0
-                    else if ((cell_sum .eq. 2) .or. (cell_sum .eq. 3)) then
-                        ! Cell is happy
-                        field_next(j, i) = 1
-                    else
-                        ! Cell dies of overpopulation
-                        field_next(j, i) = 0
-                    end if
-                else ! Cell was dead
-                    if (cell_sum .eq. 3) then
-                        ! Cell is born
-                        field_next(j, i) = 1
-                    else
-                        ! Catch case, transfer state
-                        field_next(j, i) = 0
-                    end if
-                end if
+                ! Instead of explicit comparisions, we look up the new state in a lookup table
+                ! Note that we write back to teh same field
+                field_current(j, i) = neighbour_lookup(cell_sum, field_current(j, i))
             end do 
         end do
 
@@ -115,9 +93,9 @@ program simple
         ! Print step diagnostics
         time_delta = time_finish - time_start
         time_sum = time_sum + time_delta
-        call print_step_report(args, time_delta, k, field_next)
+        call print_step_report(args, time_delta, k, field_current)
     end do
 
     ! Print concluding diagnostics
-    call print_report(args, time_sum, "simple")
+    call print_report(args, time_sum, "simple_simd")
 end

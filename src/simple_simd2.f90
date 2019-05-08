@@ -15,10 +15,13 @@ program simple
 
     ! Algorithmus specific variables
     integer(1)                                          :: cell_sum
-    integer(4)                                          :: i, j, n, m
+    integer(1), dimension(0:8, 0:1), parameter          :: neighbour_lookup = reshape(&
+        (/  0, 0, 0, 1, 0, 0, 0, 0, 0, &
+            0, 0, 1, 1, 0, 0, 0, 0, 0 /), (/ 9, 2 /))
+    integer(4)                                          :: i, j, n
 
 
-    write(*, "(A)") "Program: Simple: Naive"
+    write(*, "(A)") "Program: Simple optimized further: Avoiding memory access when using SIMD"
 
     ! Parse CLI arguments
     call arguments_get(args)
@@ -70,7 +73,7 @@ program simple
 
         call cpu_time(time_start)
         
-        ! Naive implementation
+        ! Naive implementation with lookups
         ! We iterate column-wise to exploit CPU cache locality,
         ! because fortran lays out its array memory column-wise.
         do i = 1, args%width
@@ -78,36 +81,18 @@ program simple
                 ! We sum the 3*3 square around the current cell
                 ! Because we have a outflow border, we do not have to worry about edge cases
                 cell_sum = 0
-                do n = i - 1, i + 1
-                    do m = j - 1, j + 1
-                        cell_sum = cell_sum + field_current(m, n)
-                    end do
+                !$omp simd reduction(+:cell_sum)
+                do n = 0, 2
+                    cell_sum = cell_sum + field_current(j+n, i-1) + field_current(j+n, i) + field_current(j+n, i+1)
                 end do
+                !$omp end simd
                 ! Substract center cell, we only want neighbours
                 cell_sum = cell_sum - field_current(j, i)
 
                 ! We decide on the next state of this cell based on the count of neighbours
-                if (field_current(j, i) .eq. 1) then ! Cell was alive
-                    if (cell_sum .lt. 2) then
-                        ! Cell dies of loneliness
-                        field_next(j, i) = 0
-                    else if ((cell_sum .eq. 2) .or. (cell_sum .eq. 3)) then
-                        ! Cell is happy
-                        field_next(j, i) = 1
-                    else
-                        ! Cell dies of overpopulation
-                        field_next(j, i) = 0
-                    end if
-                else ! Cell was dead
-                    if (cell_sum .eq. 3) then
-                        ! Cell is born
-                        field_next(j, i) = 1
-                    else
-                        ! Catch case, transfer state
-                        field_next(j, i) = 0
-                    end if
-                end if
-            end do 
+                ! Instead of explicit comparisions, we look up the new state in a lookup table
+                field_next(j, i) = neighbour_lookup(cell_sum, field_current(j, i))
+            end do
         end do
 
         call cpu_time(time_finish)
@@ -119,5 +104,5 @@ program simple
     end do
 
     ! Print concluding diagnostics
-    call print_report(args, time_sum, "simple")
+    call print_report(args, time_sum, "simple_simd2")
 end

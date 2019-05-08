@@ -15,10 +15,13 @@ program simple
 
     ! Algorithmus specific variables
     integer(1)                                          :: cell_sum
+    integer(1), dimension(0:8, 0:1), parameter          :: neighbour_lookup = reshape(&
+        (/  0, 0, 0, 1, 0, 0, 0, 0, 0, &
+            0, 0, 1, 1, 0, 0, 0, 0, 0 /), (/ 9, 2 /))
     integer(4)                                          :: i, j, n, m
 
 
-    write(*, "(A)") "Program: Simple: Naive"
+    write(*, "(A)") "Program: Simple optimized: Lookup table"
 
     ! Parse CLI arguments
     call arguments_get(args)
@@ -70,7 +73,7 @@ program simple
 
         call cpu_time(time_start)
         
-        ! Naive implementation
+        ! Naive implementation with lookups
         ! We iterate column-wise to exploit CPU cache locality,
         ! because fortran lays out its array memory column-wise.
         do i = 1, args%width
@@ -87,26 +90,8 @@ program simple
                 cell_sum = cell_sum - field_current(j, i)
 
                 ! We decide on the next state of this cell based on the count of neighbours
-                if (field_current(j, i) .eq. 1) then ! Cell was alive
-                    if (cell_sum .lt. 2) then
-                        ! Cell dies of loneliness
-                        field_next(j, i) = 0
-                    else if ((cell_sum .eq. 2) .or. (cell_sum .eq. 3)) then
-                        ! Cell is happy
-                        field_next(j, i) = 1
-                    else
-                        ! Cell dies of overpopulation
-                        field_next(j, i) = 0
-                    end if
-                else ! Cell was dead
-                    if (cell_sum .eq. 3) then
-                        ! Cell is born
-                        field_next(j, i) = 1
-                    else
-                        ! Catch case, transfer state
-                        field_next(j, i) = 0
-                    end if
-                end if
+                ! Instead of explicit comparisions, we look up the new state in a lookup table
+                field_next(j, i) = neighbour_lookup(cell_sum, field_current(j, i))
             end do 
         end do
 
@@ -119,5 +104,5 @@ program simple
     end do
 
     ! Print concluding diagnostics
-    call print_report(args, time_sum, "simple")
+    call print_report(args, time_sum, "simple_opt")
 end
