@@ -138,13 +138,14 @@ module helpers
         real(REAL64), intent(in)        :: time, clock
         character(len=*), intent(in)    :: name
 
-        write(*, "(A, I0, A, I0, A)") "Done, computed ", args%steps, " steps a ", (args%width * args%height), " cells"
+        write(*, "(A, I0, A, I0, A, I0, A)") "Done, computed ", args%steps, " steps a ", args%width, &
+            " * ", args%height, " cells"
         write(*, "(A, I0, A, I0, A, F10.6, A, F10.6, A)") "Timing: CPU*", args%threads, "T*", &
             args%nodes, "N: ", time, " s, WC: ", clock, " s"
         write(*, "(A, F10.6, A, F10.6, A, F10.6, A)") "Avg: ", (real(args%steps) / clock), " sps, CPU/WC: ", &
             (time / clock), ", parallel efficiency: ", ((time / clock) / real(args%threads * args%nodes)) * 100, "%"
-        write(*, "(A, A, A, I0, A, I0, A, I0, A, I0, A, F10.6, A, F10.6)") "REPORT ", name, " ", &
-            args%threads, " ", args%nodes, " ", args%steps, " ", (args%width * args%height), " ", time, " ", clock
+        write(*, "(A, A, A, I0, A, I0, A, I0, A, I0, A, I0, A, F10.6, A, F10.6)") "REPORT ", name, " ", &
+            args%threads, " ", args%nodes, " ", args%steps, " ", args%width, " ", args%height, " ", time, " ", clock
     end subroutine
 
 end module
