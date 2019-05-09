@@ -23,7 +23,7 @@ Run `make all` or `make modulename` or `make bin/modulename` to build all resp. 
 Run `make clean` to remove all binaries.
 
 ### Debugging and optimization
-To enable debug symbols and disable code optimization, define the `DEBUG` makefile variable when calling `make`, like this: `make modulename DEBUG`.
+To enable debug symbols and disable code optimization, define the `DEBUG` makefile variable when calling `make`, like this: `make modulename DEBUG=1`.
 
 To enable all possible compiler optimizations in order to produce fast code, do not define the `DEBUG` variable. Note that due to aggressive optimization binaries are generally not portable between different CPUs.
 
