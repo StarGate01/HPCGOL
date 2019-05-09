@@ -30,6 +30,7 @@ program threads
     ! Parse CLI arguments
     call arguments_get(args, .true.)
 
+    ! Print work distribution across threads
     write(*, "(A)") "Work distribution:"
     do t = 1, args%threads
         call compute_work_slice(args%threads, args%width, t, t_i_begin, t_i_end)

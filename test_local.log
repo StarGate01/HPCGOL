@@ -1,0 +1,125 @@
+mpiexec -n 1 bin/simple 0 10 10000 10000 1 1
+Program: Simple: Naive
+Parameters: Steps=10, Width=10000, Height=10000, Threads=1, Nodes=1
+Initializing...
+Generating...
+Completed initialization, CPU*1T*1N:   3.734375 s, WC:   3.872870 s
+Computing 10 steps...
+Step #1, CPU*1T*1N:   0.921875 s, WC:   0.927469 s
+Step #2, CPU*1T*1N:   0.796875 s, WC:   0.792856 s
+Step #3, CPU*1T*1N:   0.750000 s, WC:   0.747856 s
+Step #4, CPU*1T*1N:   0.718750 s, WC:   0.728137 s
+Step #5, CPU*1T*1N:   0.718750 s, WC:   0.711667 s
+Step #6, CPU*1T*1N:   0.703125 s, WC:   0.696611 s
+Step #7, CPU*1T*1N:   0.671875 s, WC:   0.676002 s
+Step #8, CPU*1T*1N:   0.671875 s, WC:   0.671920 s
+Step #9, CPU*1T*1N:   0.656250 s, WC:   0.655876 s
+Step #10, CPU*1T*1N:   0.640625 s, WC:   0.643320 s
+Done, computed 10 steps a 100000000 cells
+Timing: CPU*1T*1N:   7.250000 s, WC:   7.251714 s
+Avg:   1.378984 sps, CPU/WC:   0.999764, parallel efficiency:  99.976364%
+REPORT simple 1 1 10 100000000   7.250000   7.251714
+mpiexec -n 1 bin/simple_opt 0 10 10000 10000 1 1
+Program: Simple optimized: Lookup table
+Parameters: Steps=10, Width=10000, Height=10000, Threads=1, Nodes=1
+Initializing...
+Generating...
+Completed initialization, CPU*1T*1N:   3.484375 s, WC:   3.493276 s
+Computing 10 steps...
+Step #1, CPU*1T*1N:   0.312500 s, WC:   0.305001 s
+Step #2, CPU*1T*1N:   0.296875 s, WC:   0.301691 s
+Step #3, CPU*1T*1N:   0.296875 s, WC:   0.299767 s
+Step #4, CPU*1T*1N:   0.312500 s, WC:   0.301335 s
+Step #5, CPU*1T*1N:   0.296875 s, WC:   0.300186 s
+Step #6, CPU*1T*1N:   0.296875 s, WC:   0.300084 s
+Step #7, CPU*1T*1N:   0.296875 s, WC:   0.299672 s
+Step #8, CPU*1T*1N:   0.312500 s, WC:   0.301495 s
+Step #9, CPU*1T*1N:   0.296875 s, WC:   0.301287 s
+Step #10, CPU*1T*1N:   0.296875 s, WC:   0.299822 s
+Done, computed 10 steps a 100000000 cells
+Timing: CPU*1T*1N:   3.015625 s, WC:   3.010340 s
+Avg:   3.321884 sps, CPU/WC:   1.001756, parallel efficiency: 100.175561%
+REPORT simple_opt 1 1 10 100000000   3.015625   3.010340
+mpiexec -n 1 bin/threads 0 10 10000 10000 8 1
+Program: Multithreaded optimized
+Parameters: Steps=10, Width=10000, Height=10000, Threads=8, Nodes=1
+Work distribution:
+Thread #0: col. 1-1250
+Thread #1: col. 1251-2500
+Thread #2: col. 2501-3750
+Thread #3: col. 3751-5000
+Thread #4: col. 5001-6250
+Thread #5: col. 6251-7500
+Thread #6: col. 7501-8750
+Thread #7: col. 8751-10000
+Initializing...
+Generating...
+Completed initialization, CPU*8T*1N:   3.531250 s, WC:   3.537636 s
+Step #1, CPU*8T*1N:   0.734375 s, WC:   0.098542 s
+Step #2, CPU*8T*1N:   0.812500 s, WC:   0.106102 s
+Step #3, CPU*8T*1N:   0.718750 s, WC:   0.111479 s
+Step #4, CPU*8T*1N:   0.828125 s, WC:   0.099944 s
+Step #5, CPU*8T*1N:   0.734375 s, WC:   0.098048 s
+Step #6, CPU*8T*1N:   0.750000 s, WC:   0.096856 s
+Step #7, CPU*8T*1N:   0.718750 s, WC:   0.096777 s
+Step #8, CPU*8T*1N:   0.765625 s, WC:   0.103261 s
+Step #9, CPU*8T*1N:   0.734375 s, WC:   0.110941 s
+Step #10, CPU*8T*1N:   0.718750 s, WC:   0.102722 s
+Done, computed 10 steps a 100000000 cells
+Timing: CPU*8T*1N:   7.515625 s, WC:   1.024672 s
+Avg:   9.759221 sps, CPU/WC:   7.334664, parallel efficiency:  91.683303%
+REPORT threads 8 1 10 100000000   7.515625   1.024672
+mpiexec -n 2 bin/nodes 0 10 10000 10000 1 2
+Program: Multi-CPU optimized
+Parameters: Steps=10, Width=10000, Height=10000, Threads=1, Nodes=2
+Work distribution:
+Node #0: col. 1-5000
+Node #1: col. 5001-10000
+Initializing...
+Generating...
+Completed initialization, CPU*1T*2N:   3.625000 s, WC:   1.831716 s
+Step #1, CPU*1T*2N:   0.562500 s, WC:   0.277455 s
+Step #2, CPU*1T*2N:   0.531250 s, WC:   0.263891 s
+Step #3, CPU*1T*2N:   0.375000 s, WC:   0.181322 s
+Step #4, CPU*1T*2N:   0.375000 s, WC:   0.199677 s
+Step #5, CPU*1T*2N:   0.375000 s, WC:   0.182084 s
+Step #6, CPU*1T*2N:   0.437500 s, WC:   0.222641 s
+Step #7, CPU*1T*2N:   0.468750 s, WC:   0.227207 s
+Step #8, CPU*1T*2N:   0.343750 s, WC:   0.180370 s
+Step #9, CPU*1T*2N:   0.406250 s, WC:   0.191311 s
+Step #10, CPU*1T*2N:   0.343750 s, WC:   0.183034 s
+Done, computed 10 steps a 100000000 cells
+Timing: CPU*1T*2N:   4.218750 s, WC:   2.108992 s
+Avg:   4.741602 sps, CPU/WC:   2.000363, parallel efficiency: 100.018161%
+REPORT nodes 1 2 10 100000000   4.218750   2.108992
+mpiexec -n 2 bin/hybrid 0 10 10000 10000 4 2
+Program: Multi-CPU and Multithreaded optimized
+Parameters: Steps=10, Width=10000, Height=10000, Threads=4, Nodes=2
+Work distribution:
+Node #0: col. 1-5000
+  Thread #0: col. 1-1250
+  Thread #1: col. 1251-2500
+  Thread #2: col. 2501-3750
+  Thread #3: col. 3751-5000
+Node #1: col. 5001-10000
+  Thread #0: col. 5001-6250
+  Thread #1: col. 6251-7500
+  Thread #2: col. 7501-8750
+  Thread #3: col. 8751-10000
+Initializing...
+Generating...
+Completed initialization, CPU*4T*2N:   3.562500 s, WC:   1.781484 s
+Step #1, CPU*4T*2N:   0.750000 s, WC:   0.099708 s
+Step #2, CPU*4T*2N:   0.734375 s, WC:   0.097923 s
+Step #3, CPU*4T*2N:   0.828125 s, WC:   0.101816 s
+Step #4, CPU*4T*2N:   0.703125 s, WC:   0.111292 s
+Step #5, CPU*4T*2N:   0.765625 s, WC:   0.109006 s
+Step #6, CPU*4T*2N:   0.671875 s, WC:   0.109029 s
+Step #7, CPU*4T*2N:   0.718750 s, WC:   0.096313 s
+Step #8, CPU*4T*2N:   0.703125 s, WC:   0.096937 s
+Step #9, CPU*4T*2N:   0.812500 s, WC:   0.103039 s
+Step #10, CPU*4T*2N:   0.734375 s, WC:   0.096709 s
+Done, computed 10 steps a 100000000 cells
+Timing: CPU*4T*2N:   7.421875 s, WC:   1.021772 s
+Avg:   9.786919 sps, CPU/WC:   7.263729, parallel efficiency:  90.796614%
+REPORT hybrid 4 2 10 100000000   7.421875   1.021772

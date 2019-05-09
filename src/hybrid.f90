@@ -31,7 +31,9 @@ program hybrid
     real(REAL64), dimension(1)                              :: time_delta_send, time_delta_recv
 
 
+    ! Initialize the MPI subsystem
     call mpi_init(error)
+    ! Get rank of current node
     call mpi_comm_rank(MPI_COMM_WORLD, rank, error)
 
     if (rank .eq. 0) then
@@ -41,6 +43,7 @@ program hybrid
     ! Parse CLI arguments
     call arguments_get(args, (rank .eq. 0))
 
+    ! Print work distribution across nodes and threads
     if (rank .eq. 0) then
         write(*, "(A)") "Work distribution:"
         do n = 1, args%nodes
@@ -187,6 +190,7 @@ program hybrid
     if (rank .eq. 0) then
         call print_report(args, time_sum, clock_sum, "hybrid")
     end if
+    ! Cleanup
     deallocate(field_one)
     deallocate(field_two)
     call mpi_finalize(error)
