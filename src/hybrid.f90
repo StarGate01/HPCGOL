@@ -12,7 +12,8 @@ program hybrid
     type(t_arguments)                                       :: args ! CLI arguments
     integer(INT8), dimension(:, :), allocatable, target     :: field_one, field_two ! Cell data array
     integer(INT8), dimension(:, :), pointer                 :: field_current, field_next ! Cell data pointers
-    real(REAL64)                                            :: time_start, time_finish, time_delta, time_sum, clock_delta, clock_sum ! Timing stamps
+    real(REAL64)                                            :: time_start, time_finish, time_delta, &
+                                                                time_sum, clock_delta, clock_sum ! Timing stamps
     integer(INT64)                                          :: clock_start, clock_finish, clock_rate = 0 ! Wallclock
 
     integer                                                 :: alloc_stat_one, alloc_stat_two ! Cell array allocation status
@@ -51,7 +52,8 @@ program hybrid
             write(*, "(A, I0, A, I0, A, I0)") "Node #", (n-1), ": col. ", n_i_begin, "-", n_i_end
             do t = 1, args%threads
                 call compute_work_slice(args%threads, (n_i_end - n_i_begin + 1), t, t_i_begin, t_i_end)
-                write(*, "(A, I0, A, I0, A, I0)") "  Thread #", (t-1), ": col. ", n_i_begin + t_i_begin - 1, "-", n_i_begin + t_i_end - 1
+                write(*, "(A, I0, A, I0, A, I0)") "  Thread #", (t-1), ": col. ", &
+                    n_i_begin + t_i_begin - 1, "-", n_i_begin + t_i_end - 1
             end do
         end do
     end if
