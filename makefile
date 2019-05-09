@@ -36,15 +36,15 @@ BINS=$(MODS:%=$(BIN)/%)
 $(BIN)/%: $(SRC)/%.f90 $(LIBSRCS)
 	@echo Building $@
 	mkdir -p $(BIN)
-ifdef $(DEBUG)
-	echo "Building debug using GCC"
+ifdef DEBUG
+	@echo "Building debug using GCC"
 	$(MPIC) $(FCFLAGS) $(FCWARN) $(FCDEBUG) $(LIBSRCS) -J $(BIN) -o $@ $<
 else
-ifdef $(INTEL)
-	echo "Building release using Intel"
+ifdef INTEL
+	@echo "Building release using Intel"
 	$(MPICINT) $(FCINTFLAGS) $(FCINTWARN) $(FCINTOPT) $(LIBSRCS) -module $(BIN) -o $@ $<
 else
-	echo "Building release using GCC"
+	@echo "Building release using GCC"
 	$(MPIC) $(FCFLAGS) $(FCWARN) $(FCOPT) $(LIBSRCS) -J $(BIN) -o $@ $<
 endif
 endif
