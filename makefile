@@ -24,7 +24,7 @@ FCDEBUG=-g
 FCINT=ifort
 MPICINT=mpif90
 FCINTFLAGS=-free -implicitnone -stand f08 -qopenmp
-FCINTOPT=-fast -ipo -fno-alias -align all -unroll -inline-level=2 -qopenmp-simd
+FCINTOPT=-O3 -ipo -fno-alias -align all -unroll -inline-level=2 -qopenmp-simd
 FCINTWARN=-warn all
 
 LIBS=helpers functions
