@@ -31,7 +31,7 @@ program nodes
     ! MPI specific variables
     integer                                                 :: error, nid
     integer(INT32)                                          :: n_i_begin, n_i_end, n_i_width
-    real(REAL64)                                            :: time_delta_recv
+    real(REAL64), dimension(1)                              :: time_delta_send, time_delta_recv
 
 
     call mpi_init(error)
@@ -94,10 +94,11 @@ program nodes
     end if
     time_delta = time_finish - time_start
     ! Sum CPU time across all nodes
-    call mpi_reduce(time_delta, time_delta_recv, 1, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, error)
+    time_delta_send(1) = time_delta
+    call mpi_reduce(time_delta_send, time_delta_recv, 1, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, error)
     ! Print initialization diagnostics
     if (nid .eq. 0) then
-        call print_init_report(args, time_delta_recv, clock_delta, field_current)
+        call print_init_report(args, time_delta_recv(1), clock_delta, field_current, .false.)
     end if
 
 
@@ -155,14 +156,16 @@ program nodes
         end if
         time_delta = time_finish - time_start
         ! Sum CPU time across all nodes
-        call mpi_reduce(time_delta, time_delta_recv, 1, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, error)
+        time_delta_send(1) = time_delta
+        call mpi_reduce(time_delta_send, time_delta_recv, 1, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, error)
         if (nid .eq. 0) then
-            time_sum = time_sum + time_delta_recv
+            time_sum = time_sum + time_delta_recv(1)
             clock_delta = real(clock_finish - clock_start) / real(clock_rate)
             clock_sum = clock_sum + clock_delta
             ! Print step diagnostics
-            call print_step_report(args, time_delta_recv, clock_delta, k, field_next)
+            call print_step_report(args, time_delta_recv(1), clock_delta, k, field_next, .false.)
         end if
+        
     end do
 
     ! Print concluding diagnostics

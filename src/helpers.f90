@@ -54,30 +54,15 @@ module helpers
         end if
     end subroutine
 
-    ! Prints the field with the numeric values of each cell
-    subroutine field_print_numeric(field, width, height)
-        integer(INT8), dimension(*, *), pointer, intent(in) :: field(:, :)
-        integer(INT32), intent(in) :: width, height
-
-        integer(INT32)  :: i, j
-
-        do i = 1, width
-            do j = 1, height
-                write(*, "(I0) ", advance="no") field(j, i)
-            end do
-            write(*, "(A)") " "
-        end do
-    end subroutine
-
     ! Prints a graphical representation of the field
     subroutine field_print_fancy(field, width, height)
-        integer(INT8), dimension(*, *), pointer, intent(in) :: field(:, :)
+        integer(INT8), dimension(0:, 0:), intent(in) :: field
         integer(INT32), intent(in) :: width, height
 
         integer(INT32)  :: i, j
 
-        do i = 1, width
-            do j = 1, height
+        do j = 1, height
+            do i = 1, width
                 if(field(j, i) .eq. 1) then
                     write(*, "(A) ", advance="no") "██"
                 else
@@ -90,7 +75,7 @@ module helpers
 
     ! Fills the field with random ones and zeros
     subroutine field_randomize(field, width, height)
-        integer(INT8), dimension(*, *), pointer, intent(inout) :: field(:, :)
+        integer(INT8), dimension(0:, 0:), intent(inout) :: field
         integer(INT32), intent(in) :: width, height
 
         integer(INT32)  :: i, j
@@ -100,9 +85,9 @@ module helpers
             do j = 1, height
                 call random_number(rnd)
                 if (rnd .le. 0.5) then
-                    field(j, i) = 1
+                    field(j, i) = 1_INT8
                 else
-                    field(j, i) = 0
+                    field(j, i) = 0_INT8
                 end if
             end do
         end do
@@ -110,35 +95,37 @@ module helpers
 
      ! Fills the field with a glider pattern
     subroutine field_pattern(field)
-        integer(INT8), dimension(*, *), pointer, intent(inout) :: field(:, :)
+        integer(INT8), dimension(0:, 0:), intent(inout) :: field
 
-        field(1:3, 1:3) = reshape((/ 0, 0, 1, 1, 0, 1, 0, 1, 1 /), (/ 3, 3 /))
+        field(1:3, 1:3) = reshape((/ 0_INT8, 0_INT8, 1_INT8, 1_INT8, 0_INT8, 1_INT8, 0_INT8, 1_INT8, 1_INT8 /), (/ 3, 3 /))
     end subroutine
 
     ! Prints a step report
-    subroutine print_step_report(args, time, clock, num, field)
+    subroutine print_step_report(args, time, clock, num, field, disable_print_override)
         type(t_arguments), intent(in)   :: args
         real(REAL64), intent(in)        :: time, clock
         integer                         :: num
-        integer(INT8), dimension(*, *), pointer, intent(inout) :: field(:, :)
+        integer(INT8), dimension(0:, 0:), intent(in) :: field
+        logical, intent(in)            :: disable_print_override
 
         write(*, "(A, I0, A, I0, A, I0, A, F10.6, A, F10.6, A)") "Step #", num, ", CPU*", args%threads, &
             "T*", args%nodes, "N: ", time, " s, WC: ", clock, " s"
-        if (args%print) then
+        if (args%print .and. (.not.disable_print_override)) then
             call field_print_fancy(field, args%width, args%height)
             write(*, "(A)") ""
         end if
     end subroutine
 
     ! Prints the concluding report
-    subroutine print_init_report(args, time, clock, field)
+    subroutine print_init_report(args, time, clock, field, disable_print_override)
         type(t_arguments), intent(in)   :: args
         real(REAL64), intent(in)        :: time, clock
-        integer(INT8), dimension(*, *), pointer, intent(inout) :: field(:, :)
+        integer(INT8), dimension(0:, 0:), intent(in) :: field
+        logical, intent(in)             :: disable_print_override
 
         write(*, "(A, I0, A, I0, A, F10.6, A, F10.6, A)") "Completed initialization, CPU*", args%threads, "T*", &
             args%nodes, "N: ", time, " s, WC: ", clock, " s"
-        if (args%print) then
+        if (args%print .and. (.not.disable_print_override)) then
             write(*, "(A)") "Initial state"
             call field_print_fancy(field, args%width, args%height)
             write(*, "(A)") " "

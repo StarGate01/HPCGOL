@@ -32,6 +32,12 @@ program threads
 
     ! Parse CLI arguments
     call arguments_get(args, .true.)
+
+    write(*, "(A)") "Work distribution:"
+    do t = 1, args%threads
+        call compute_work_slice(args%threads, args%width, t, t_i_begin, t_i_end)
+        write(*, "(A, I0, A, I0, A, I0)") "Thread #", (t-1), ": col. ", t_i_begin, "-", t_i_end
+    end do
   
     write(*, "(A)") "Initializing..."
     call system_clock(clock_start, clock_rate)
@@ -67,7 +73,7 @@ program threads
     time_delta = time_finish - time_start
     clock_delta = real(clock_finish - clock_start) / real(clock_rate)
     ! Print initialization diagnostics
-    call print_init_report(args, time_delta, clock_delta, field_current)
+    call print_init_report(args, time_delta, clock_delta, field_current, .false.)
 
 
     ! Main computation loop
@@ -121,7 +127,7 @@ program threads
         clock_delta = real(clock_finish - clock_start) / real(clock_rate)
         clock_sum = clock_sum + clock_delta
         ! Print step diagnostics
-        call print_step_report(args, time_delta, clock_delta, k, field_next)
+        call print_step_report(args, time_delta, clock_delta, k, field_next, .false.)
     end do
 
     ! Print concluding diagnostics

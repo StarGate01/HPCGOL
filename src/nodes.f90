@@ -26,23 +26,31 @@ program nodes
     integer(INT32)                                          :: i, j, n, m
 
     ! MPI specific variables
-    integer                                                 :: error, nid
+    integer                                                 :: error, rank
     integer(INT32)                                          :: n_i_begin, n_i_end, n_i_width
-    real(REAL64)                                            :: time_delta_recv
+    real(REAL64), dimension(1)                              :: time_delta_send, time_delta_recv
 
 
     call mpi_init(error)
-    call mpi_comm_rank(MPI_COMM_WORLD, nid, error)
+    call mpi_comm_rank(MPI_COMM_WORLD, rank, error)
 
-    if (nid .eq. 0) then
+    if (rank .eq. 0) then
         write(*, "(A)") "Program: Multi-CPU optimized"
     end if
 
     ! Parse CLI arguments
-    call arguments_get(args, (nid .eq. 0))
+    call arguments_get(args, (rank .eq. 0))
+
+    if (rank .eq. 0) then
+        write(*, "(A)") "Work distribution:"
+        do n = 1, args%nodes
+            call compute_work_slice(args%nodes, args%width, n, n_i_begin, n_i_end)
+            write(*, "(A, I0, A, I0, A, I0)") "Node #", (n-1), ": col. ", n_i_begin, "-", n_i_end
+        end do
+    end if
     
     ! Note that only rank zero does wallclock measuring
-    if (nid .eq. 0) then
+    if (rank .eq. 0) then
         write(*, "(A)") "Initializing..."
         call system_clock(clock_start, clock_rate)
     end if
@@ -52,7 +60,7 @@ program nodes
     ! Allocate cell data array
     ! Note that we allocate only a slice of the total memory, as it is spit across nodes
     ! Compute what data each node should work on
-    call compute_work_slice(args%nodes, args%width, nid + 1, n_i_begin, n_i_end)
+    call compute_work_slice(args%nodes, args%width, rank + 1, n_i_begin, n_i_end)
     n_i_width = n_i_end - n_i_begin + 1
 
     ! Note that we allocate double the memory, this is used to compute the next state while still reading the old
@@ -60,12 +68,12 @@ program nodes
     ! By default, arrays are 1-indexed in fortran, so we use index 0 and n+1
     allocate(field_one(0:args%height + 2, 0:n_i_width + 2), stat = alloc_stat_one)
     if (alloc_stat_one .ne. 0) then
-        write(*, "(A, I0, A, I0)") "Error: Cannot allocate field_one memory: ", nid, ", ", alloc_stat_one
+        write(*, "(A, I0, A, I0)") "Error: Cannot allocate field_one memory: ", rank, ", ", alloc_stat_one
         stop 1
     end if
     allocate(field_two(0:args%height + 2, 0:n_i_width + 2), stat = alloc_stat_two)
     if (alloc_stat_two .ne. 0) then
-        write(*, "(A, I0, A, I0)") "Error: Cannot allocate field_two memory: ", nid, ", ", alloc_stat_two
+        write(*, "(A, I0, A, I0)") "Error: Cannot allocate field_two memory: ", rank, ", ", alloc_stat_two
         stop 1
     end if
 
@@ -75,26 +83,30 @@ program nodes
     field_current => field_one
     field_next => field_two
     ! Initialize cells randomly
-    if (nid .eq. 0) then
+    if (rank .eq. 0) then
         write(*, "(A)") "Generating..."
+        call field_pattern(field_current)
     end if
-    ! call field_pattern(field_current)
-    call field_randomize(field_current, n_i_width, args%height)
+    ! call field_randomize(field_current, n_i_width, args%height)
     ! Synchronize nodes and exchange outflow borders
     call mpi_barrier(MPI_COMM_WORLD, error)
-    call exchange_borders(nid, args%nodes, field_current, n_i_width, args%height)
+    call exchange_borders(rank, args%nodes, field_current, n_i_width, args%height)
 
     call cpu_time(time_finish)
-    if (nid .eq. 0) then
+    if (rank .eq. 0) then
         call system_clock(clock_finish)
         clock_delta = real(clock_finish - clock_start) / real(clock_rate)
     end if
     time_delta = time_finish - time_start
     ! Sum CPU time across all nodes
-    call mpi_reduce(time_delta, time_delta_recv, 1, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, error)
+    time_delta_send(1) = time_delta
+    call mpi_reduce(time_delta_send, time_delta_recv, 1, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, error)
     ! Print initialization diagnostics
-    if (nid .eq. 0) then
-        call print_init_report(args, time_delta_recv, clock_delta, field_current)
+    if (rank .eq. 0) then
+        call print_init_report(args, time_delta_recv(1), clock_delta, field_current, .true.)
+    end if
+    if (args%print) then
+        call field_print_fancy_sliced(rank, args%nodes, field_current, n_i_width, args%width, args%height)
     end if
 
 
@@ -116,7 +128,7 @@ program nodes
         ! Naive implementation with lookups
         ! We iterate column-wise to exploit CPU cache locality,
         ! because fortran lays out its array memory column-wise.
-        do i = 1, args%width
+        do i = 1, n_i_width
             do j = 1, args%height
                 ! We sum the 3*3 square around the current cell
                 ! Because we have a outflow border, we do not have to worry about edge cases
@@ -137,26 +149,30 @@ program nodes
         
         ! Synchronize nodes and exchange outflow borders
         call mpi_barrier(MPI_COMM_WORLD, error)
-        call exchange_borders(nid, args%nodes, field_current, n_i_width, args%height)
+        call exchange_borders(rank, args%nodes, field_next, n_i_width, args%height)
 
         call cpu_time(time_finish)
-        if (nid .eq. 0) then
+        if (rank .eq. 0) then
             call system_clock(clock_finish)
         end if
         time_delta = time_finish - time_start
         ! Sum CPU time across all nodes
-        call mpi_reduce(time_delta, time_delta_recv, 1, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, error)
-        if (nid .eq. 0) then
-            time_sum = time_sum + time_delta_recv
+        time_delta_send(1) = time_delta
+        call mpi_reduce(time_delta_send, time_delta_recv, 1, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, error)
+        if (rank .eq. 0) then
+            time_sum = time_sum + time_delta_recv(1)
             clock_delta = real(clock_finish - clock_start) / real(clock_rate)
             clock_sum = clock_sum + clock_delta
             ! Print step diagnostics
-            call print_step_report(args, time_delta_recv, clock_delta, k, field_next)
+            call print_step_report(args, time_delta_recv(1), clock_delta, k, field_next, .true.)
+        end if
+        if (args%print) then
+            call field_print_fancy_sliced(rank, args%nodes, field_next, n_i_width, args%width, args%height)
         end if
     end do
 
     ! Print concluding diagnostics
-    if (nid .eq. 0) then
+    if (rank .eq. 0) then
         call print_report(args, time_sum, clock_sum, "nodes")
     end if
     deallocate(field_one)

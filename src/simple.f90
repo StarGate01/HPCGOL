@@ -63,7 +63,7 @@ program simple
     time_delta = time_finish - time_start
     clock_delta = real(clock_finish - clock_start) / real(clock_rate)
     ! Print initialization diagnostics
-    call print_init_report(args, time_delta, clock_delta, field_current)
+    call print_init_report(args, time_delta, clock_delta, field_current, .false.)
 
 
     ! Main computation loop
@@ -129,7 +129,7 @@ program simple
         clock_delta = real(clock_finish - clock_start) / real(clock_rate)
         clock_sum = clock_sum + clock_delta
         ! Print step diagnostics
-        call print_step_report(args, time_delta, clock_delta, k, field_next)
+        call print_step_report(args, time_delta, clock_delta, k, field_next, .false.)
     end do
 
     ! Print concluding diagnostics

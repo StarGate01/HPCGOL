@@ -105,7 +105,7 @@
         {
             "label": "Local: Run Multi-CPU",
             "type": "shell",
-            "command": "make run EXE=nodes ARG_THREADS=4 ARG_NODES=2",
+            "command": "make run EXE=nodes ARG_NODES=2",
             "problemMatcher": [],
             "group": "test"
         },
