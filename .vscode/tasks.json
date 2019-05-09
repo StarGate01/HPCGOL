@@ -159,6 +159,16 @@
             "group": "test"
         },
         {
+            "label": "Local: Run Test suite",
+            "type": "shell",
+            "command": "./test_local.sh",
+            "options": {
+                "cwd": "${workspaceFolder}/test"
+            },
+            "problemMatcher": [],
+            "group": "test"
+        },
+        {
             "label": "Remote: Single SLURM Enqueue",
             "type": "shell",
             "command": "ssh lrzhpc \"cd HPCGOL/test; sbatch test_hpc.sh\"",

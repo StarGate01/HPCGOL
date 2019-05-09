@@ -2,6 +2,3 @@ bin/
 *.mod
 ~*
 *.vect
-*.log
-*.out
-*.err
