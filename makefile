@@ -17,9 +17,15 @@ FC=gfortran
 MPIC=mpifort
 MPIX=mpiexec
 FCFLAGS=-ffree-form -ffree-line-length-none -fmax-identifier-length=63 -fimplicit-none -std=f2008 -fopenmp
-FCWARN=-pedantic -Wall
 FCOPT=-Ofast -march=native -mtune=native -funroll-loops -ftree-vectorize -fopt-info-vec-optimized -fopenmp-simd
+FCWARN=-pedantic -Wall
 FCDEBUG=-g
+
+FCINT=ifort
+MPICINT=mpif90
+FCINTFLAGS=-free -extend_source -implicitnone -std08 -openmp
+FCINTOPT=-fast -ipo -fno-alias -align all -unroll -inline-level=2 -vec-report=1 -openmp-simd
+FCINTWARN=-warn all
 
 LIBS=helpers functions
 LIBSRCS=$(LIBS:%=$(SRC)/%.f90)
@@ -31,9 +37,16 @@ $(BIN)/%: $(SRC)/%.f90 $(LIBSRCS)
 	@echo Building $@
 	mkdir -p $(BIN)
 ifdef $(DEBUG)
+	echo "Building debug using GCC"
 	$(MPIC) $(FCFLAGS) $(FCWARN) $(FCDEBUG) $(LIBSRCS) -J $(BIN) -o $@ $<
 else
+ifdef $(INTEL)
+	echo "Building release using Intel"
+	$(MPICINT) $(FCINTFLAGS) $(FCINTWARN) $(FCINTOPT) $(LIBSRCS) -module $(BIN) -o $@ $<
+else
+	echo "Building release using GCC"
 	$(MPIC) $(FCFLAGS) $(FCWARN) $(FCOPT) $(LIBSRCS) -J $(BIN) -o $@ $<
+endif
 endif
 	@echo Completed building $@
 

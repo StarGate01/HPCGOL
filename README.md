@@ -31,7 +31,7 @@ To enable all possible compiler optimizations in order to produce fast code, do 
 If you want to use `OpenMPI` instead of `MPICH2`, the code should compile and work but I have not tested this yet but may support it in the future.
 
 ### GNU compiler vs Intel compiler
-Instead of the GNU compiler `gfortran` the intel compiler `ifort` may be used. In general, every OpenMP- and MPI-capable Fortran-2008 standard compliant compiler should work.
+Instead of the GNU compiler `gfortran` the intel compiler `ifort` may be used by defining the makefile variable `INTEL`. In general, every OpenMP- and MPI-capable Fortran-2008 standard compliant compiler should work.
 
 ## Execution
 The included makefile has a `run` target, which should be used to launch the binaries. Note that also invokes the compilation. The syntax and some default values are as follows:
