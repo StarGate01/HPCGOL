@@ -158,5 +158,24 @@
             "problemMatcher": [],
             "group": "test"
         },
+        {
+            "label": "Remote: Single SLURM Enqueue",
+            "type": "shell",
+            "command": "ssh lrzhpc \"cd HPCGOL/test; sbatch test_hpc.sh\"",
+            "problemMatcher": [],
+            "group": "test"
+        },
+        {
+            "label": "Remote: Check SLURM Queue",
+            "type": "shell",
+            "command": "ssh lrzhpc \"squeue --cluster=mpp2 --format='%.18i %.10P %.20j %.8u %.2t %.10M %.6D %R'\"",
+            "problemMatcher": []
+        },
+        {
+            "label": "Remote: Open SLURM View",
+            "type": "shell",
+            "command": "DISPLAY=0:0 LIBGL_ALWAYS_INDIRECT=1 ssh lrzhpc \"sview\"",
+            "problemMatcher": []
+        }
     ]
 }
