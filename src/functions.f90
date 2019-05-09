@@ -1,4 +1,4 @@
-! This module deduplicates some functions used by threads, nodes and hybrid
+! This module deduplicates some functions
 module functions
 
     use MPI
@@ -7,6 +7,11 @@ module functions
     use, intrinsic :: iso_fortran_env
 
     implicit none
+
+    ! The cell state lookup table
+    integer(INT8), dimension(0:8, 0:1), parameter :: neighbour_lookup = reshape(&
+        (/  0_INT8, 0_INT8, 0_INT8, 1_INT8, 0_INT8, 0_INT8, 0_INT8, 0_INT8, 0_INT8, &
+            0_INT8, 0_INT8, 1_INT8, 1_INT8, 0_INT8, 0_INT8, 0_INT8, 0_INT8, 0_INT8 /), (/ 9, 2 /))
 
     contains
 
@@ -43,7 +48,6 @@ module functions
         ! Two-phase data exchange: First every node sends its rightmost column to the right,
         ! and stores the incoming data in its left border. Then, its performs the same thing but
         ! in the other direction (data left out, border right in)
-        ! write(*,*) rank, width, height
         if (nodes .gt. 1) then
             if(rank .eq. 0) then
                 ! Node zero sends to the right
@@ -67,6 +71,7 @@ module functions
     end subroutine
 
     ! This subroutine collects all field slices from all nodes into node zero and then prints it
+    ! Note that this should only bne used for small fields due to memory limitations
     subroutine field_print_fancy_sliced(rank, nodes, field, slice_width, width, height)
         integer(INT32), intent(in)  :: rank, nodes, slice_width, width, height
         integer(INT8), dimension(0:, 0:), intent(in) :: field
@@ -78,14 +83,16 @@ module functions
 
         ! Allocate a temp field
         if(rank .eq. 0) then
-            allocate(temp_field(0:height+2, 0:width+2), stat = alloc_stat)
+            allocate(temp_field(0:height + 1, 0:width + 1), stat = alloc_stat)
             if (alloc_stat .ne. 0) then
                 write(*, "(A, I0)") "Error: Cannot allocate temp_field memory: ", alloc_stat
                 stop 1
             end if
             ! Copy the first slice
+            temp_field = 1
             temp_field(:, 1:slice_width) = field(:, 1:slice_width)
         end if
+        ! Wait for allocation
         call mpi_barrier(MPI_COMM_WORLD, error)
 
         ! Aggregate all data slices into node zero
@@ -101,9 +108,10 @@ module functions
                     MPI_INTEGER1, n, 0, MPI_COMM_WORLD, status, error)
             end if
         end do
+        ! Wait for aggregation
         call mpi_barrier(MPI_COMM_WORLD, error)
 
-        ! Print the temp field
+        ! Print and free the temp field
         if(rank .eq. 0) then
             call field_print_fancy(temp_field, width, height)
             write(*, "(A)") ""

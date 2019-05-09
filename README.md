@@ -22,6 +22,11 @@ Run `make all` or `make modulename` or `make bin/modulename` to build all resp. 
 
 Run `make clean` to remove all binaries.
 
+### Debugging and optimization
+To enable debug symbols and disable code optimization, define the `DEBUG` makefile variable when calling `make`, like this: `make modulename DEBUG`.
+
+To enable all possible compiler optimizations in order to produce fast code, do not define the `DEBUG` variable. Note that due to aggressive optimization binaries are generally not portable between different CPUs.
+
 ### MPICH2 vs OpenMPI
 If you want to use `OpenMPI` instead of `MPICH2`, the code should compile and work but I have not tested this yet but may support it in the future.
 

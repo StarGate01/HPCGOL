@@ -13,16 +13,13 @@ program nodes
     integer(INT8), dimension(:, :), allocatable, target     :: field_one, field_two ! Cell data array
     integer(INT8), dimension(:, :), pointer                 :: field_current, field_next ! Cell data pointers
     real(REAL64)                                            :: time_start, time_finish, time_delta, time_sum, clock_delta, clock_sum ! Timing stamps
-    integer(INT64)                                          :: clock_start, clock_finish, clock_rate ! Wallclock
+    integer(INT64)                                          :: clock_start, clock_finish, clock_rate = 0 ! Wallclock
 
     integer                                                 :: alloc_stat_one, alloc_stat_two ! Cell array allocation status
     integer                                                 :: k ! Step index
 
     ! Algorithmus specific variables
     integer(INT8)                                           :: cell_sum
-    integer(INT8), dimension(0:8, 0:1), parameter           :: neighbour_lookup = reshape(&
-        (/  0, 0, 0, 1, 0, 0, 0, 0, 0, &
-            0, 0, 1, 1, 0, 0, 0, 0, 0 /), (/ 9, 2 /))
     integer(INT32)                                          :: i, j, n, m
 
     ! MPI specific variables
@@ -66,12 +63,12 @@ program nodes
     ! Note that we allocate double the memory, this is used to compute the next state while still reading the old
     ! Note that we allocate a border of one cell, this is to capture any outflow
     ! By default, arrays are 1-indexed in fortran, so we use index 0 and n+1
-    allocate(field_one(0:args%height + 2, 0:n_i_width + 2), stat = alloc_stat_one)
+    allocate(field_one(0:args%height + 1, 0:n_i_width + 1), stat = alloc_stat_one)
     if (alloc_stat_one .ne. 0) then
         write(*, "(A, I0, A, I0)") "Error: Cannot allocate field_one memory: ", rank, ", ", alloc_stat_one
         stop 1
     end if
-    allocate(field_two(0:args%height + 2, 0:n_i_width + 2), stat = alloc_stat_two)
+    allocate(field_two(0:args%height + 1, 0:n_i_width + 1), stat = alloc_stat_two)
     if (alloc_stat_two .ne. 0) then
         write(*, "(A, I0, A, I0)") "Error: Cannot allocate field_two memory: ", rank, ", ", alloc_stat_two
         stop 1
@@ -85,9 +82,9 @@ program nodes
     ! Initialize cells randomly
     if (rank .eq. 0) then
         write(*, "(A)") "Generating..."
-        call field_pattern(field_current)
     end if
-    ! call field_randomize(field_current, n_i_width, args%height)
+    ! call field_pattern(field_current)
+    call field_randomize(field_current, n_i_width, args%height)
     ! Synchronize nodes and exchange outflow borders
     call mpi_barrier(MPI_COMM_WORLD, error)
     call exchange_borders(rank, args%nodes, field_current, n_i_width, args%height)
@@ -106,9 +103,9 @@ program nodes
         call print_init_report(args, time_delta_recv(1), clock_delta, field_current, .true.)
     end if
     if (args%print) then
+        ! On MPI systems, we need a special printing function to aggregate the data
         call field_print_fancy_sliced(rank, args%nodes, field_current, n_i_width, args%width, args%height)
     end if
-
 
     ! Main computation loop
     do k = 1, args%steps
@@ -167,6 +164,7 @@ program nodes
             call print_step_report(args, time_delta_recv(1), clock_delta, k, field_next, .true.)
         end if
         if (args%print) then
+             ! On MPI systems, we need a special printing function to aggregate the data
             call field_print_fancy_sliced(rank, args%nodes, field_next, n_i_width, args%width, args%height)
         end if
     end do

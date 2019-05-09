@@ -1,8 +1,8 @@
 EXE=simple
-ARG_PRINT=1
-ARG_STEPS=25
-ARG_WIDTH=11
-ARG_HEIGHT=11
+ARG_PRINT=0
+ARG_STEPS=10
+ARG_WIDTH=10000
+ARG_HEIGHT=10000
 ARG_THREADS=1
 ARG_NODES=1
 
@@ -17,8 +17,9 @@ FC=gfortran
 MPIC=mpifort
 MPIX=mpiexec
 FCFLAGS=-ffree-form -ffree-line-length-none -fmax-identifier-length=63 -fimplicit-none -std=f2008 -fopenmp
-FCWARN=-pedantic -Wall -g
-FCOPT=#-Ofast -march=native -mtune=native -funroll-loops -ftree-vectorize -fopt-info-vec-optimized -fopenmp-simd
+FCWARN=-pedantic -Wall
+FCOPT=-Ofast -march=native -mtune=native -funroll-loops -ftree-vectorize -fopt-info-vec-optimized -fopenmp-simd
+FCDEBUG=-g
 
 LIBS=helpers functions
 LIBSRCS=$(LIBS:%=$(SRC)/%.f90)
@@ -29,7 +30,11 @@ BINS=$(MODS:%=$(BIN)/%)
 $(BIN)/%: $(SRC)/%.f90 $(LIBSRCS)
 	@echo Building $@
 	mkdir -p $(BIN)
+ifdef $(DEBUG)
+	$(MPIC) $(FCFLAGS) $(FCWARN) $(FCDEBUG) $(LIBSRCS) -J $(BIN) -o $@ $<
+else
 	$(MPIC) $(FCFLAGS) $(FCWARN) $(FCOPT) $(LIBSRCS) -J $(BIN) -o $@ $<
+endif
 	@echo Completed building $@
 
 $(MODS): %: $(BIN)/%

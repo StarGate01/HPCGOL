@@ -4,7 +4,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Local: Build All",
+            "label": "Local: Build All Optimized",
             "type": "shell",
             "command": "make all",
             "problemMatcher": {
@@ -39,6 +39,48 @@
                 "kind": "build",
                 "isDefault": true
             },
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Local: Build All Debug",
+            "type": "shell",
+            "command": "make all DEBUG",
+            "problemMatcher": {
+                "fileLocation": ["relative", "${workspaceRoot}"],
+                "pattern": [
+                    {
+                        "regexp": "^([^\\s].*):(\\d+):(\\d+):$",
+                        "file": 1,
+                        "line": 2,
+                        "column": 3,
+                    },
+                    {
+                        "regexp": "^.*$",
+                    },
+                    {
+                        "regexp": "^\\s+(.*)$",
+                        "code": 1
+                    },
+                    {
+                        "regexp": "^.*$",
+                    },
+                    {
+                        "regexp": "^(Warning|Error):\\s+(.*)$",
+                        "severity": 1,
+                        "message": 2
+                    }
+                ],
+                "source": "compiler ",
+                "applyTo": "allDocuments"
+            },
+            "group": "build",
             "presentation": {
                 "echo": true,
                 "reveal": "silent",
