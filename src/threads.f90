@@ -11,7 +11,8 @@ program threads
     type(t_arguments)                                       :: args ! CLI arguments
     integer(INT8), dimension(:, :), allocatable, target     :: field_one, field_two ! Cell data array
     integer(INT8), dimension(:, :), pointer                 :: field_current, field_next ! Cell data pointers
-    real(REAL64)                                            :: time_start, time_finish, time_delta, time_sum, clock_delta, clock_sum ! Timing stamps
+    real(REAL64)                                            :: time_start, time_finish, time_delta, &
+                                                                time_sum, clock_delta, clock_sum ! Timing stamps
     integer(INT64)                                          :: clock_start, clock_finish, clock_rate = 0 ! Wallclock
 
     integer                                                 :: alloc_stat_one, alloc_stat_two ! Cell array allocation status
