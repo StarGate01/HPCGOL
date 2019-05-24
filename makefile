@@ -26,6 +26,7 @@ MPICINT=mpif90
 FCINTFLAGS=-free -implicitnone -stand f08 -qopenmp
 FCINTOPT=-O3 -ipo -fno-alias -align all -unroll -inline-level=2 -qopt-report1 -qopenmp-simd
 FCINTWARN=-warn all
+FCINTDEBUG=-g
 
 LIBS=helpers functions
 LIBSRCS=$(LIBS:%=$(SRC)/%.f90)
@@ -37,15 +38,20 @@ $(BIN)/%: $(SRC)/%.f90 $(LIBSRCS)
 	@echo Building $@
 	mkdir -p $(BIN)
 ifdef DEBUG
+ifdef INTEL
+	@echo "Building debug using Intel"
+	MPICH_F90=$(FCINT) OMPI_FC=$(FCINT) I_MPI_F90=$(FCINT) $(MPICINT) $(FCINTFLAGS) $(FCINTWARN) $(FCINTDEBUG) $(LIBSRCS) -module $(BIN) -o $@ $<
+else
 	@echo "Building debug using GCC"
-	$(MPIC) $(FCFLAGS) $(FCWARN) $(FCDEBUG) $(LIBSRCS) -J $(BIN) -o $@ $<
+	MPICH_F90=$(FC) OMPI_FC=$(FC) I_MPI_F90=$(FC) $(MPIC) $(FCFLAGS) $(FCWARN) $(FCDEBUG) $(LIBSRCS) -J $(BIN) -o $@ $<
+endif
 else
 ifdef INTEL
 	@echo "Building release using Intel"
-	$(MPICINT) $(FCINTFLAGS) $(FCINTWARN) $(FCINTOPT) $(LIBSRCS) -module $(BIN) -o $@ $<
+	MPICH_F90=$(FCINT) OMPI_FC=$(FCINT) I_MPI_F90=$(FCINT) $(MPICINT) $(FCINTFLAGS) $(FCINTWARN) $(FCINTOPT) $(LIBSRCS) -module $(BIN) -o $@ $<
 else
 	@echo "Building release using GCC"
-	$(MPIC) $(FCFLAGS) $(FCWARN) $(FCOPT) $(LIBSRCS) -J $(BIN) -o $@ $<
+	MPICH_F90=$(FC) OMPI_FC=$(FC) I_MPI_F90=$(FC) $(MPIC) $(FCFLAGS) $(FCWARN) $(FCOPT) $(LIBSRCS) -J $(BIN) -o $@ $<
 endif
 endif
 	@echo Completed building $@

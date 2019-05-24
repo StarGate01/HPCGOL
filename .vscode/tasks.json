@@ -4,7 +4,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Local: Build All Optimized",
+            "label": "Local: Build All Optimized (GNU)",
             "type": "shell",
             "command": "make all",
             "problemMatcher": {
@@ -32,7 +32,7 @@
                         "message": 2
                     }
                 ],
-                "source": "compiler ",
+                "source": "gnu ",
                 "applyTo": "allDocuments"
             },
             "group": {
@@ -49,9 +49,9 @@
             }
         },
         {
-            "label": "Local: Build All Debug",
+            "label": "Local: Build All Debug (GNU)",
             "type": "shell",
-            "command": "make all DEBUG",
+            "command": "DEBUG=1 make all",
             "problemMatcher": {
                 "fileLocation": ["relative", "${workspaceRoot}"],
                 "pattern": [
@@ -77,7 +77,71 @@
                         "message": 2
                     }
                 ],
-                "source": "compiler ",
+                "source": "gnu ",
+                "applyTo": "allDocuments"
+            },
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Local: Build All Optimized (INTEL)",
+            "type": "shell",
+            "command": "INTEL=1 make all",
+            "problemMatcher": {
+                "fileLocation": ["relative", "${workspaceRoot}"],
+                "pattern": [
+                    {
+                        "regexp": "^([^\\s].*)\\((\\d+)\\):\\s+(warning|error)\\s+(.*)$",
+                        "file": 1,
+                        "line": 2,
+                        "severity": 3,
+                        "message": 4,
+                    },
+                    {
+                        "regexp": "^\\s+(.*)$",
+                        "code": 1
+                    }
+                ],
+                "source": "intel ",
+                "applyTo": "allDocuments"
+            },
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Local: Build All Debug (INTEL)",
+            "type": "shell",
+            "command": "DEBUG=1 INTEL=1 make all",
+            "problemMatcher": {
+                "fileLocation": ["relative", "${workspaceRoot}"],
+                "pattern": [
+                    {
+                        "regexp": "^([^\\s].*)\\((\\d+)\\):\\s+(warning|error)\\s+(.*)$",
+                        "file": 1,
+                        "line": 2,
+                        "severity": 3,
+                        "message": 4,
+                    },
+                    {
+                        "regexp": "^\\s+(.*)$",
+                        "code": 1
+                    }
+                ],
+                "source": "intel ",
                 "applyTo": "allDocuments"
             },
             "group": "build",
@@ -165,6 +229,45 @@
             "options": {
                 "cwd": "${workspaceFolder}/test"
             },
+            "problemMatcher": [],
+            "group": "test"
+        },
+        {
+            "label": "Remote: Build All Optimized (INTEL)",
+            "type": "shell",
+            "command": "ssh lrzhpc \"cd HPCGOL; INTEL=1 make all\"",
+            "problemMatcher": {
+                "fileLocation": ["relative", "${workspaceRoot}"],
+                "pattern": [
+                    {
+                        "regexp": "^([^\\s].*)\\((\\d+)\\):\\s+(warning|error)\\s+(.*)$",
+                        "file": 1,
+                        "line": 2,
+                        "severity": 3,
+                        "message": 4,
+                    },
+                    {
+                        "regexp": "^\\s+(.*)$",
+                        "code": 1
+                    }
+                ],
+                "source": "intel ",
+                "applyTo": "allDocuments"
+            },
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Remote: Clean",
+            "type": "shell",
+            "command": "ssh lrzhpc \"cd HPCGOL; make clean\"",
             "problemMatcher": [],
             "group": "test"
         },
